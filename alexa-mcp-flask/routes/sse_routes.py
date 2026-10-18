@@ -171,7 +171,6 @@ def sse_endpoint():
     )
 
     response.headers["Cache-Control"] = "no-cache, no-transform"
-    response.headers["Connection"] = "keep-alive"
     response.headers["X-Accel-Buffering"] = "no"
     response.headers["Content-Type"] = "text/event-stream; charset=utf-8"
 
