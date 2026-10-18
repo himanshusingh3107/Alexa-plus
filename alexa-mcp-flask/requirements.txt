@@ -1,8 +1,32 @@
+# ============================================================
+# Alexa+ MCP Server — Python Dependencies
+# Amazon Developer Hackathon 2026
+# ============================================================
+
+# --- Web Framework & HTTP ---
 Flask>=3.0.2
 flask-cors>=4.0.0
+waitress>=3.0.0
+requests>=2.31.0
+
+# --- Database & ORM ---
 SQLAlchemy>=2.0.27
+# Optional: PostgreSQL adapter (uncomment for production)
+# psycopg2-binary>=2.9.9
+
+# --- Environment & Config ---
 python-dotenv>=1.0.1
 pydantic>=2.6.4
-requests>=2.31.0
-waitress>=3.0.0
 
+# --- Amazon Alexa Skills Kit SDK ---
+ask-sdk-core>=1.19.0
+ask-sdk-webservice-support>=1.7.0
+
+# --- Google Gemini AI (LLM Orchestration) ---
+google-genai>=2.30.1
+
+# --- Model Context Protocol (stdio transport) ---
+mcp>=1.0.0
+
+# --- Utilities ---
+boto3>=1.34.0             # AWS SDK (Lambda, DynamoDB, SNS)

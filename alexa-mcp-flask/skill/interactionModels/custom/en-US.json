@@ -1,0 +1,599 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "alexa plus",
+      "intents": [
+        {
+          "name": "AlexaPlusIntent",
+          "slots": [
+            {
+              "name": "query",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "ask brain {query}",
+            "think about {query}",
+            "what do you think about {query}",
+            "help me with {query}",
+            "{query}",
+            "I need help with {query}",
+            "tell me about {query}",
+            "can you {query}",
+            "please {query}",
+            "figure out {query}",
+            "ask {query}",
+            "how to {query}",
+            "what is {query}",
+            "search for {query}",
+            "can you help me with {query}",
+            "I want to know {query}",
+            "explain {query}"
+          ]
+        },
+        {
+          "name": "CreateBookingIntent",
+          "slots": [
+            {
+              "name": "booking_title",
+              "type": "AMAZON.SearchQuery",
+              "samples": [
+                "{booking_title}",
+                "it is {booking_title}",
+                "call it {booking_title}",
+                "title is {booking_title}",
+                "the title is {booking_title}",
+                "book {booking_title}",
+                "schedule {booking_title}"
+              ]
+            },
+            {
+              "name": "customer_name",
+              "type": "AMAZON.FirstName"
+            },
+            {
+              "name": "booking_category",
+              "type": "BOOKING_CATEGORY"
+            },
+            {
+              "name": "booking_time",
+              "type": "AMAZON.DATE"
+            }
+          ],
+          "samples": [
+            "book {booking_title} for {customer_name}",
+            "schedule {booking_title}",
+            "create a {booking_category} appointment for {booking_time}",
+            "make a reservation for {booking_title} at {booking_time}",
+            "book a {booking_category} for {customer_name} at {booking_time}",
+            "schedule a {booking_category} appointment called {booking_title}",
+            "book {booking_title}",
+            "schedule a {booking_category} for {customer_name}",
+            "make a reservation for {booking_title}",
+            "create a {booking_category} booking",
+            "schedule {booking_title} for {customer_name}",
+            "book a {booking_category}",
+            "reserve {booking_title} for {customer_name} at {booking_time}",
+            "new booking for {booking_title}",
+            "schedule an appointment for {customer_name}"
+          ]
+        },
+        {
+          "name": "CheckStatusIntent",
+          "slots": [
+            {
+              "name": "status_filter",
+              "type": "STATUS_FILTER"
+            }
+          ],
+          "samples": [
+            "what's on my schedule",
+            "show my {status_filter} bookings",
+            "check my tasks",
+            "what are my {status_filter} appointments",
+            "list my bookings",
+            "do I have any {status_filter} tasks",
+            "check my schedule",
+            "what is on my schedule",
+            "show my bookings",
+            "list my tasks",
+            "check status of my bookings",
+            "view my {status_filter} bookings",
+            "show all my bookings",
+            "do I have any bookings",
+            "check booking status",
+            "what tasks are {status_filter}"
+          ]
+        },
+        {
+          "name": "SmartHomeIntent",
+          "slots": [
+            {
+              "name": "device_name",
+              "type": "AMAZON.SearchQuery"
+            },
+            {
+              "name": "action_command",
+              "type": "ACTION_COMMAND"
+            }
+          ],
+          "samples": [
+            "{action_command} the {device_name}",
+            "turn {action_command} the {device_name}",
+            "set {device_name} to {action_command}",
+            "activate {action_command} mode on {device_name}",
+            "{action_command} {device_name}",
+            "turn the {device_name} {action_command}",
+            "switch {action_command} the {device_name}",
+            "switch the {device_name} {action_command}",
+            "make the {device_name} {action_command}",
+            "set the {device_name} to {action_command}",
+            "put {device_name} in {action_command} mode"
+          ]
+        },
+        {
+          "name": "SystemHealthIntent",
+          "slots": [],
+          "samples": [
+            "system status",
+            "how's the system",
+            "check system health",
+            "run diagnostics",
+            "system report",
+            "check status",
+            "how is the system doing",
+            "system health check",
+            "run system diagnostics",
+            "what is the system status",
+            "diagnostic report"
+          ]
+        },
+        {
+          "name": "RememberPreferenceIntent",
+          "slots": [
+            {
+              "name": "preference",
+              "type": "AMAZON.SearchQuery"
+            }
+          ],
+          "samples": [
+            "remember that I {preference}",
+            "note that {preference}",
+            "save my preference {preference}",
+            "I prefer {preference}",
+            "keep in mind {preference}",
+            "please remember that I {preference}",
+            "remember {preference}",
+            "save this preference {preference}",
+            "store my preference {preference}",
+            "take note that {preference}",
+            "make a note that {preference}"
+          ]
+        },
+        {
+          "name": "RecallMemoryIntent",
+          "slots": [],
+          "samples": [
+            "what do you know about me",
+            "recall my preferences",
+            "what have I told you",
+            "my profile",
+            "what do you remember",
+            "what do you remember about me",
+            "show my profile",
+            "what are my preferences",
+            "list my preferences",
+            "tell me what you remember",
+            "what information do you have on me"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        }
+      ],
+      "types": [
+        {
+          "name": "BOOKING_CATEGORY",
+          "values": [
+            {
+              "id": "doctor",
+              "name": {
+                "value": "doctor",
+                "synonyms": [
+                  "physician",
+                  "dentist",
+                  "medical",
+                  "clinic",
+                  "health care",
+                  "checkup",
+                  "therapy",
+                  "hospital",
+                  "specialist"
+                ]
+              }
+            },
+            {
+              "id": "restaurant",
+              "name": {
+                "value": "restaurant",
+                "synonyms": [
+                  "dinner",
+                  "lunch",
+                  "cafe",
+                  "food",
+                  "table",
+                  "dining",
+                  "eatery",
+                  "bistro",
+                  "breakfast",
+                  "brunch"
+                ]
+              }
+            },
+            {
+              "id": "cab",
+              "name": {
+                "value": "cab",
+                "synonyms": [
+                  "taxi",
+                  "ride",
+                  "uber",
+                  "lyft",
+                  "car",
+                  "driver",
+                  "transport",
+                  "shuttle"
+                ]
+              }
+            },
+            {
+              "id": "flight",
+              "name": {
+                "value": "flight",
+                "synonyms": [
+                  "plane",
+                  "airline",
+                  "air travel",
+                  "ticket",
+                  "airplane",
+                  "flight ticket"
+                ]
+              }
+            },
+            {
+              "id": "home_service",
+              "name": {
+                "value": "home_service",
+                "synonyms": [
+                  "plumber",
+                  "cleaning",
+                  "electrician",
+                  "maintenance",
+                  "repair",
+                  "handyman",
+                  "house cleaning",
+                  "maid",
+                  "carpenter"
+                ]
+              }
+            },
+            {
+              "id": "general",
+              "name": {
+                "value": "general",
+                "synonyms": [
+                  "standard",
+                  "generic",
+                  "other",
+                  "appointment",
+                  "task",
+                  "event",
+                  "meeting"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "STATUS_FILTER",
+          "values": [
+            {
+              "id": "pending",
+              "name": {
+                "value": "pending",
+                "synonyms": [
+                  "unconfirmed",
+                  "open",
+                  "in progress",
+                  "waiting",
+                  "queued",
+                  "unresolved"
+                ]
+              }
+            },
+            {
+              "id": "confirmed",
+              "name": {
+                "value": "confirmed",
+                "synonyms": [
+                  "booked",
+                  "accepted",
+                  "scheduled",
+                  "approved",
+                  "active",
+                  "set"
+                ]
+              }
+            },
+            {
+              "id": "completed",
+              "name": {
+                "value": "completed",
+                "synonyms": [
+                  "done",
+                  "finished",
+                  "resolved",
+                  "closed",
+                  "past"
+                ]
+              }
+            },
+            {
+              "id": "cancelled",
+              "name": {
+                "value": "cancelled",
+                "synonyms": [
+                  "canceled",
+                  "voided",
+                  "deleted",
+                  "dropped",
+                  "rejected"
+                ]
+              }
+            },
+            {
+              "id": "all",
+              "name": {
+                "value": "all",
+                "synonyms": [
+                  "everything",
+                  "any",
+                  "every booking",
+                  "all bookings",
+                  "all tasks",
+                  "both"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "ACTION_COMMAND",
+          "values": [
+            {
+              "id": "on",
+              "name": {
+                "value": "on",
+                "synonyms": [
+                  "turn on",
+                  "switch on",
+                  "enable",
+                  "power on",
+                  "start"
+                ]
+              }
+            },
+            {
+              "id": "off",
+              "name": {
+                "value": "off",
+                "synonyms": [
+                  "turn off",
+                  "switch off",
+                  "disable",
+                  "power off",
+                  "shutdown",
+                  "stop"
+                ]
+              }
+            },
+            {
+              "id": "dim",
+              "name": {
+                "value": "dim",
+                "synonyms": [
+                  "dim down",
+                  "lower",
+                  "reduce brightness",
+                  "soften"
+                ]
+              }
+            },
+            {
+              "id": "bright",
+              "name": {
+                "value": "bright",
+                "synonyms": [
+                  "brighten",
+                  "increase brightness",
+                  "maximum brightness",
+                  "high brightness"
+                ]
+              }
+            },
+            {
+              "id": "cool",
+              "name": {
+                "value": "cool",
+                "synonyms": [
+                  "chill",
+                  "lower temperature",
+                  "air conditioning",
+                  "ac",
+                  "colder"
+                ]
+              }
+            },
+            {
+              "id": "warm",
+              "name": {
+                "value": "warm",
+                "synonyms": [
+                  "heat",
+                  "raise temperature",
+                  "heater",
+                  "warmer",
+                  "heating"
+                ]
+              }
+            },
+            {
+              "id": "eco",
+              "name": {
+                "value": "eco",
+                "synonyms": [
+                  "economy",
+                  "energy saving",
+                  "eco mode",
+                  "green mode",
+                  "saving"
+                ]
+              }
+            },
+            {
+              "id": "auto",
+              "name": {
+                "value": "auto",
+                "synonyms": [
+                  "automatic",
+                  "default",
+                  "smart mode",
+                  "automated"
+                ]
+              }
+            },
+            {
+              "id": "lock",
+              "name": {
+                "value": "lock",
+                "synonyms": [
+                  "secure",
+                  "latch",
+                  "bolt"
+                ]
+              }
+            },
+            {
+              "id": "unlock",
+              "name": {
+                "value": "unlock",
+                "synonyms": [
+                  "open",
+                  "unlatch",
+                  "unbolt",
+                  "release"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "dialog": {
+      "delegationStrategy": "SKILL_RESPONSE",
+      "intents": [
+        {
+          "name": "CreateBookingIntent",
+          "delegationStrategy": "SKILL_RESPONSE",
+          "confirmationRequired": true,
+          "prompts": {
+            "confirmation": "Confirm.Intent.CreateBookingIntent"
+          },
+          "slots": [
+            {
+              "name": "booking_title",
+              "type": "AMAZON.SearchQuery",
+              "elicitationRequired": true,
+              "confirmationRequired": false,
+              "prompts": {
+                "elicitation": "Elicit.Slot.CreateBookingIntent.booking_title"
+              }
+            },
+            {
+              "name": "customer_name",
+              "type": "AMAZON.FirstName",
+              "elicitationRequired": false,
+              "confirmationRequired": false
+            },
+            {
+              "name": "booking_category",
+              "type": "BOOKING_CATEGORY",
+              "elicitationRequired": false,
+              "confirmationRequired": false
+            },
+            {
+              "name": "booking_time",
+              "type": "AMAZON.DATE",
+              "elicitationRequired": false,
+              "confirmationRequired": false
+            }
+          ]
+        }
+      ]
+    },
+    "prompts": [
+      {
+        "id": "Elicit.Slot.CreateBookingIntent.booking_title",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "What would you like to title this booking?"
+          },
+          {
+            "type": "PlainText",
+            "value": "What is the name or title of the booking you want to schedule?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Please provide a title or description for this appointment."
+          }
+        ]
+      },
+      {
+        "id": "Confirm.Intent.CreateBookingIntent",
+        "variations": [
+          {
+            "type": "PlainText",
+            "value": "Are you sure you want to schedule {booking_title}?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Would you like me to go ahead and create the booking for {booking_title}?"
+          },
+          {
+            "type": "PlainText",
+            "value": "Should I confirm and save the booking {booking_title}?"
+          }
+        ]
+      }
+    ]
+  }
+}
+

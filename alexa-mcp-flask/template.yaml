@@ -1,0 +1,133 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  AWS SAM Template for Alexa+ Skill Backend.
+  Deploys the Alexa+ serverless backend Lambda function, DynamoDB user memory table,
+  IAM policies, CloudWatch logs, and Alexa Skills Kit event triggers.
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Runtime: python3.12
+    Architectures:
+      - x86_64
+    Tracing: Active
+    Environment:
+      Variables:
+        LOG_LEVEL: !Ref LogLevel
+        DATABASE_URL: !Ref DatabaseUrl
+        GEMINI_API_KEY: !Ref GeminiApiKey
+        ALEXA_SKILL_ID: !Ref AlexaSkillId
+        USER_MEMORY_TABLE: !Ref UserMemoryTable
+
+Parameters:
+  Stage:
+    Type: String
+    Default: prod
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    Description: Deployment stage environment identifier
+
+  AlexaSkillId:
+    Type: String
+    Default: amzn1.ask.skill.placeholder-alexa-plus-skill-id
+    Description: Amazon Alexa Skill ID for request verification and event routing
+
+  GeminiApiKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Google Gemini API Key for autonomous LLM reasoning and MCP tool execution
+
+  DatabaseUrl:
+    Type: String
+    Default: sqlite:////tmp/alexa_mcp.db
+    Description: SQLAlchemy connection string (SQLite on /tmp for Lambda, or PostgreSQL URI)
+
+  LogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - DEBUG
+      - INFO
+      - WARNING
+      - ERROR
+      - CRITICAL
+    Description: Application logging verbosity level
+
+Resources:
+  AlexaPlusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub alexa-plus-backend-${Stage}
+      Description: Alexa+ voice skill handler, MCP client, and AI orchestration engine
+      CodeUri: .
+      Handler: lambda_handler.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserMemoryTable
+        - Statement:
+            - Sid: CloudWatchLogsDelivery
+              Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
+      Events:
+        AlexaSkillEvent:
+          Type: AlexaSkill
+          Properties:
+            SkillId: !Ref AlexaSkillId
+
+  UserMemoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub alexa-plus-user-memory-${Stage}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: memoryKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: memoryKey
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Application
+          Value: AlexaPlus
+        - Key: Environment
+          Value: !Ref Stage
+
+Outputs:
+  AlexaPlusFunctionArn:
+    Description: ARN of the Alexa+ backend Lambda function (Paste into skill.json endpoint)
+    Value: !GetAtt AlexaPlusFunction.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-FunctionArn
+
+  AlexaPlusFunctionIamRole:
+    Description: Implicit IAM execution role ARN created for the Alexa+ Lambda function
+    Value: !GetAtt AlexaPlusFunctionRole.Arn
+
+  UserMemoryTableArn:
+    Description: ARN of the UserMemory DynamoDB table
+    Value: !GetAtt UserMemoryTable.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-UserMemoryTableArn
+
+  UserMemoryTableName:
+    Description: DynamoDB Table Name for user memory and persistent contextual states
+    Value: !Ref UserMemoryTable

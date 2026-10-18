@@ -1,0 +1,91 @@
+{
+  "manifest": {
+    "manifestVersion": "1.0",
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "name": "Alexa Plus",
+          "summary": "Intelligent AI assistant powered by Model Context Protocol (MCP) and Gemini AI.",
+          "description": "Alexa Plus transforms Amazon Alexa into an autonomous agent utilizing the Model Context Protocol (MCP). With Alexa Plus, you can execute complex multi-step tasks including appointment and reservation bookings, smart home device automations, system diagnostics, and real-time event alerts with deep reasoning.",
+          "examplePhrases": [
+            "Alexa, open Alexa Plus",
+            "Alexa, ask Alexa Plus to book a doctor consultation for tomorrow at 3 PM",
+            "Alexa, ask Alexa Plus to execute the evening smart home automation"
+          ],
+          "keywords": [
+            "mcp",
+            "model context protocol",
+            "ai assistant",
+            "gemini",
+            "smart home",
+            "booking",
+            "automation",
+            "productivity"
+          ],
+          "smallIconUri": "https://via.placeholder.com/108",
+          "largeIconUri": "https://via.placeholder.com/512"
+        }
+      },
+      "isAvailableWorldwide": true,
+      "testingInstructions": "Open the skill using 'Alexa, open Alexa Plus'. Try asking: 'Book dinner at Olive Garden', 'Check booking status', or 'Execute evening automation'. Ensure the backend Lambda or local MCP server is running.",
+      "category": "PRODUCTIVITY",
+      "distributionCountries": []
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "arn:aws:lambda:us-east-1:123456789012:function:AlexaPlusFunction"
+        },
+        "interfaces": []
+      }
+    },
+    "permissions": [
+      {
+        "name": "alexa::devices:all:notifications:write"
+      }
+    ],
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "locales": {
+        "en-US": {
+          "privacyPolicyUrl": "https://example.com/privacy",
+          "termsOfUseUrl": "https://example.com/terms"
+        }
+      }
+    },
+    "events": {
+      "endpoint": {
+        "uri": "arn:aws:lambda:us-east-1:123456789012:function:AlexaPlusFunction"
+      },
+      "publications": [
+        {
+          "eventName": "AMAZON.MessageAlert.Activated"
+        },
+        {
+          "eventName": "AMAZON.OrderStatus.Updated"
+        },
+        {
+          "eventName": "AMAZON.WeatherAlert.Activated"
+        },
+        {
+          "eventName": "AMAZON.TrashAndRecyclingSchedule.Updated"
+        },
+        {
+          "eventName": "AMAZON.MediaContent.Available"
+        }
+      ],
+      "subscriptions": [
+        {
+          "eventName": "AMAZON.MessageAlert.Activated"
+        },
+        {
+          "eventName": "AMAZON.OrderStatus.Updated"
+        }
+      ]
+    }
+  }
+}
