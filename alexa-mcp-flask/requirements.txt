@@ -20,7 +20,7 @@ pydantic>=2.6.4
 
 # --- Amazon Alexa Skills Kit SDK ---
 ask-sdk-core>=1.19.0
-ask-sdk-webservice-support>=1.7.0
+ask-sdk-webservice-support>=1.3.0
 
 # --- Google Gemini AI (LLM Orchestration) ---
 google-genai>=2.30.1

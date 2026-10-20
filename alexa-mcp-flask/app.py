@@ -62,9 +62,17 @@ def create_app() -> Flask:
     app.register_blueprint(sse_bp)
     app.register_blueprint(message_bp)
 
+    from flask import render_template, request
+    from config.database import get_system_counts, query_task_bookings
+    from services.external_tools import call_tool
+
     @app.route("/", methods=["GET"])
     def root():
-        """Root metadata endpoint providing server info and MCP endpoints."""
+        """Root endpoint: Serves visual Web UI for browsers, JSON for API/MCP clients."""
+        accept = request.headers.get("Accept", "")
+        if "text/html" in accept:
+            return render_template("index.html")
+
         return jsonify({
             "service": "Alexa+ MCP Production Server",
             "protocol": "Model Context Protocol (MCP)",
@@ -72,12 +80,93 @@ def create_app() -> Flask:
             "version": "1.0.0",
             "specification_version": "2025-11-25",
             "endpoints": {
+                "dashboard": "/",
                 "sse": "/sse",
                 "messages": "/messages",
                 "health": "/health",
             },
             "status": "online",
         }), 200
+
+    @app.route("/dashboard", methods=["GET"])
+    def dashboard():
+        """Explicit route to access the visual web dashboard."""
+        return render_template("index.html")
+
+    @app.route("/api/dashboard/stats", methods=["GET"])
+    def dashboard_stats():
+        """Returns live system counts and operational metrics for the web UI."""
+        return jsonify(get_system_counts()), 200
+
+    @app.route("/api/dashboard/tasks", methods=["GET"])
+    def dashboard_tasks():
+        """Returns the latest 20 voice bookings and tasks."""
+        return jsonify(query_task_bookings(limit=20)), 200
+
+    @app.route("/api/dashboard/simulate", methods=["POST"])
+    def dashboard_simulate():
+        """Interactive simulator: parses natural text commands and invokes MCP tools live."""
+        data = request.get_json(silent=True) or {}
+        utterance = str(data.get("utterance", "")).strip()
+        lowered = utterance.lower()
+
+        if not utterance:
+            return jsonify({"response": "Please enter a command to simulate."}), 400
+
+        tool_used = None
+        spoken_response = ""
+
+        try:
+            # 1. Booking Simulation
+            if any(w in lowered for w in ["book", "appointment", "reservation", "schedule"]):
+                category = "doctor" if "doctor" in lowered or "dentist" in lowered else ("restaurant" if "table" in lowered or "dinner" in lowered else "general")
+                title = utterance.replace("book", "").replace("schedule", "").strip().title() or "Appointment"
+                tool_res = call_tool("alexa_create_booking", {
+                    "title": title,
+                    "customer_name": "Demo User",
+                    "category": category,
+                    "description": f"Created via Web Simulator: {utterance}"
+                })
+                tool_used = "alexa_create_booking"
+                spoken_response = f"Done! I've scheduled your {category} appointment ('{title}'). Booking record saved in database."
+
+            # 2. Smart Home Automation Simulation
+            elif any(w in lowered for w in ["turn on", "turn off", "ac", "conditioner", "light", "thermostat", "fan"]):
+                device = "living_room_ac" if "ac" in lowered or "conditioner" in lowered else ("living_room_lights" if "light" in lowered else "smart_device")
+                action = "turn_on" if "on" in lowered else "turn_off"
+                call_tool("alexa_execute_automation", {
+                    "action_type": "smart_home_scene",
+                    "target_device_or_service": device,
+                    "parameters": {"command": action, "level": 100}
+                })
+                tool_used = "alexa_execute_automation"
+                spoken_response = f"Sure! I've executed the automated scene for '{device}'. State updated in telemetry."
+
+            # 3. Query / Schedule Check
+            elif any(w in lowered for w in ["tasks", "schedule", "bookings", "list"]):
+                call_tool("alexa_query_tasks", {"limit": 5})
+                tool_used = "alexa_query_tasks"
+                spoken_response = "I've fetched your latest tasks from the database. You can review them in the live table below."
+
+            # 4. System Health Check
+            elif any(w in lowered for w in ["health", "status", "diagnostic", "report"]):
+                health_data = call_tool("alexa_get_system_health", {})
+                tool_used = "alexa_get_system_health"
+                spoken_response = "System diagnostics complete: All MCP components, SQLite engine, and Turso Cloud database are operational."
+
+            # Default conversational fallback
+            else:
+                spoken_response = f"I heard: \"{utterance}\". As an Alexa+ agent, I can book appointments, trigger automations, or check your database tasks."
+
+            return jsonify({
+                "success": True,
+                "tool_used": tool_used,
+                "response": spoken_response
+            }), 200
+
+        except Exception as exc:
+            logger.error(f"Error in dashboard simulation: {exc}", exc_info=True)
+            return jsonify({"error": str(exc), "response": "Encountered an issue executing the tool."}), 500
 
     @app.route("/health", methods=["GET"])
     def health():

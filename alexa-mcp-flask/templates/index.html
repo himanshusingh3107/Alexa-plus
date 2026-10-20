@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alexa+ AI & MCP Web Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0304;
+      --card-bg: rgba(22, 10, 12, 0.75);
+      --card-border: rgba(255, 45, 85, 0.12);
+      --primary: #ff2d55;
+      --primary-glow: rgba(255, 45, 85, 0.35);
+      --accent: #dc2626;
+      --accent-secondary: #991b1b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #fef2f2;
+      --text-muted: #a89496;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 10% 20%, #1f070a 0%, #080203 90%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 24px;
+    }
+
+    /* Ambient background glowing circles */
+    .glow-blob {
+      position: fixed;
+      width: 480px;
+      height: 480px;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      top: -120px;
+      left: -120px;
+      filter: blur(90px);
+      z-index: 0;
+      pointer-events: none;
+    }
+    .glow-blob-2 {
+      position: fixed;
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle, rgba(185, 28, 28, 0.22) 0%, transparent 70%);
+      bottom: -150px;
+      right: -100px;
+      filter: blur(110px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      max-width: 1380px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--card-border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--primary), #991b1b);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px var(--primary-glow);
+    }
+
+    .logo-icon svg {
+      width: 26px;
+      height: 26px;
+      fill: #fff;
+    }
+
+    .logo-text h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #ffffff, #ffa3b3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      background: rgba(255, 45, 85, 0.12);
+      border: 1px solid rgba(255, 45, 85, 0.35);
+      font-size: 13px;
+      font-weight: 600;
+      color: #ff6b8b;
+    }
+
+    .status-pulse {
+      width: 8px;
+      height: 8px;
+      background: #ff2d55;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #ff2d55;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Metric Cards Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 45, 85, 0.5);
+      box-shadow: 0 6px 20px rgba(255, 45, 85, 0.15);
+    }
+
+    .metric-title {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 30px;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .metric-sub {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #ff8099;
+    }
+
+    /* Main Content Two-Column Layout */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 992px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 24px;
+      backdrop-filter: blur(14px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .panel-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Interactive Voice & Tool Simulator */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 380px;
+      border: 1px solid var(--card-border);
+      background: rgba(12, 4, 6, 0.7);
+      border-radius: 14px;
+      padding: 16px;
+      overflow-y: auto;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .chat-msg {
+      max-width: 82%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #e11d48, #be123c);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+    }
+
+    .msg-alexa {
+      align-self: flex-start;
+      background: rgba(36, 15, 18, 0.9);
+      border: 1px solid rgba(255, 45, 85, 0.2);
+      color: #ffe4e6;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-tool {
+      align-self: center;
+      background: rgba(255, 45, 85, 0.12);
+      border: 1px dashed rgba(255, 45, 85, 0.5);
+      color: #ff8099;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 6px 12px;
+    }
+
+    .chat-input-bar {
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: rgba(20, 8, 10, 0.85);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 14px var(--primary-glow);
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--primary), #b91c1c);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+      transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(255, 45, 85, 0.3);
+    }
+
+    button:hover {
+      opacity: 0.92;
+      transform: scale(0.99);
+      box-shadow: 0 4px 20px rgba(255, 45, 85, 0.5);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      font-weight: 500;
+      padding: 8px 14px;
+      font-size: 12px;
+      box-shadow: none;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 45, 85, 0.15);
+      border-color: var(--primary);
+      box-shadow: none;
+    }
+
+    /* Voice Mic Button & Pulse Animation */
+    .btn-mic {
+      background: rgba(255, 45, 85, 0.1);
+      border: 1px solid var(--card-border);
+      color: var(--primary);
+      border-radius: 10px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: none;
+    }
+
+    .btn-mic svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .btn-mic:hover {
+      background: rgba(255, 45, 85, 0.25);
+      border-color: var(--primary);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .btn-mic.listening {
+      background: rgba(255, 45, 85, 0.4);
+      border-color: #ff2d55;
+      color: #ffffff;
+      animation: mic-pulse 1.2s infinite;
+    }
+
+    @keyframes mic-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0.7); }
+      70% { box-shadow: 0 0 0 14px rgba(255, 45, 85, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0); }
+    }
+
+    .voice-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .voice-toggle input {
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* Live Event Logs Console */
+    .log-terminal {
+      background: #080203;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      height: 380px;
+      overflow-y: auto;
+      color: #ffa3b3;
+    }
+
+    .log-line {
+      margin-bottom: 6px;
+      line-height: 1.4;
+      word-break: break-all;
+    }
+
+    .log-time {
+      color: var(--text-muted);
+    }
+
+    .log-event {
+      color: #ff2d55;
+      font-weight: 600;
+    }
+
+    /* Tasks / Bookings Table */
+    .tasks-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .tasks-table th {
+      text-align: left;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--card-border);
+      font-weight: 600;
+    }
+
+    .tasks-table td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 45, 85, 0.08);
+      color: #ffe4e6;
+    }
+
+    .tag-status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-completed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .quick-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 45, 85, 0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #fecdd3;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background: rgba(255, 45, 85, 0.2);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-blob"></div>
+  <div class="glow-blob-2"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo-group">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>Alexa+ MCP AI Dashboard</h1>
+          <p>Context-Aware Voice Assistant & Model Context Protocol Gateway</p>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div class="badge-status">
+          <span class="status-pulse"></span>
+          <span id="server-status-text">MCP SERVER ONLINE</span>
+        </div>
+        <button class="btn-secondary" onclick="fetchMetrics()">Refresh Data</button>
+      </div>
+    </header>
+
+    <!-- Metrics Row -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-title">Active MCP Tools</div>
+        <div class="metric-value" id="val-tools">5</div>
+        <div class="metric-sub">Dynamic LLM Function Calling</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Total Tasks & Bookings</div>
+        <div class="metric-value" id="val-tasks">-</div>
+        <div class="metric-sub" id="sub-pending">Loading...</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Telemetry Events</div>
+        <div class="metric-value" id="val-events">-</div>
+        <div class="metric-sub">Real-Time Event Stream</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-title">Database Storage</div>
+        <div class="metric-value" style="font-size: 20px; line-height: 1.5;" id="val-db">SQLite + Turso</div>
+        <div class="metric-sub">Synchronized Cloud Memory</div>
+      </div>
+    </div>
+
+    <!-- Main 2-column view -->
+    <div class="dashboard-layout">
+      <!-- Left: Interactive Voice / Chat Simulator -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>💬 Voice Interaction Simulator</h2>
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <label class="voice-toggle">
+              <input type="checkbox" id="tts-toggle" checked>
+              <span>🔊 Alexa Voice (TTS)</span>
+            </label>
+            <span style="font-size: 12px; color: var(--text-muted);">Simulate Alexa Utterances</span>
+          </div>
+        </div>
+
+        <div class="quick-chips">
+          <span class="chip" onclick="quickSend('Book a dentist appointment for Sarah tomorrow at 10 AM')">📅 Book Dentist</span>
+          <span class="chip" onclick="quickSend('Turn on living room air conditioner')">❄️ AC Automation</span>
+          <span class="chip" onclick="quickSend('What tasks are on my schedule?')">📋 Query Schedule</span>
+          <span class="chip" onclick="quickSend('System health report')">🩺 Health Check</span>
+        </div>
+
+        <div class="chat-container" id="chat-box">
+          <div class="chat-msg msg-alexa">
+            👋 <strong>Welcome to Alexa+!</strong><br>
+            I am connected with real-time MCP tools and memory. Try speaking or typing an utterance above to execute live backend tasks.
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" id="user-input" placeholder="Speak or type command (e.g. 'Book doctor for Alex', 'Turn on AC')..." onkeydown="if(event.key==='Enter') sendMessage()">
+          <button type="button" class="btn-mic" id="mic-btn" onclick="toggleSpeechRecognition()" title="Click to speak (Microphone)">
+            <svg id="mic-icon" viewBox="0 0 24 24">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+              <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+          </button>
+          <button onclick="sendMessage()">Send Command</button>
+        </div>
+      </div>
+
+      <!-- Right: Live Telemetry & Event Stream (SSE) -->
+      <div class="panel">
+        <div class="panel-header">
+          <h2>⚡ Live MCP Telemetry Stream (SSE)</h2>
+          <span style="font-size: 12px; color: #34d399;" id="sse-indicator">● SSE Connected</span>
+        </div>
+
+        <div class="log-terminal" id="log-box">
+          <div class="log-line"><span class="log-time">[System]</span> Initializing Server-Sent Events stream listener...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: Recent Tasks & Bookings Table -->
+    <div class="panel" style="margin-top: 24px;">
+      <div class="panel-header">
+        <h2>🗄️ Recent Voice Tasks & Appointments in SQL Database</h2>
+        <button class="btn-secondary" onclick="loadTasks()">Refresh Tasks</button>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="tasks-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Created At</th>
+              <th>Task ID</th>
+            </tr>
+          </thead>
+          <tbody id="tasks-tbody">
+            <tr>
+              <td colspan="5" style="text-align:center; color: var(--text-muted); padding: 20px;">Loading database records...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Fetch metrics from backend
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('val-tasks').innerText = data.total_tasks || 0;
+          document.getElementById('sub-pending').innerText = `${data.pending_tasks || 0} Pending · ${data.confirmed_tasks || 0} Confirmed`;
+          document.getElementById('val-events').innerText = data.total_events_logged || 0;
+          if (data.database_backend) {
+            document.getElementById('val-db').innerText = data.database_backend.split('(')[0];
+          }
+        }
+      } catch (err) {
+        console.error('Metrics fetch error:', err);
+      }
+    }
+
+    // Load recent tasks table
+    async function loadTasks() {
+      try {
+        const res = await fetch('/api/dashboard/tasks');
+        if (res.ok) {
+          const tasks = await res.json();
+          const tbody = document.getElementById('tasks-tbody');
+          if (!tasks || tasks.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">No tasks in database yet. Try creating one!</td></tr>';
+            return;
+          }
+          tbody.innerHTML = tasks.map(t => `
+            <tr>
+              <td style="font-weight:600;">${escapeHtml(t.title)}</td>
+              <td><span style="text-transform: capitalize; color:#38bdf8;">${escapeHtml(t.category)}</span></td>
+              <td><span class="tag-status status-${t.status.toLowerCase()}">${escapeHtml(t.status)}</span></td>
+              <td style="color:var(--text-muted); font-size:12px;">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td>
+              <td style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748b;">${t.id.slice(0, 8)}...</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Tasks fetch error:', err);
+      }
+    }
+
+    function appendChat(role, text) {
+      const box = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      div.className = `chat-msg msg-${role}`;
+      div.innerHTML = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function appendLog(time, event, details) {
+      const logBox = document.getElementById('log-box');
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-event">${event}</span> ${details}`;
+      logBox.appendChild(line);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function quickSend(text) {
+      document.getElementById('user-input').value = text;
+      sendMessage();
+    }
+
+    // Web Speech API: Text-to-Speech (Alexa Voice Output)
+    function speakAlexaResponse(text) {
+      const toggle = document.getElementById('tts-toggle');
+      if (!toggle || !toggle.checked) return;
+      if (!('speechSynthesis' in window)) return;
+
+      window.speechSynthesis.cancel(); // Stop any ongoing speech
+      const cleanText = text.replace(/<[^>]*>?/gm, ''); // remove html tags
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.rate = 1.05;
+      utterance.pitch = 1.1;
+
+      // Select female / natural voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const naturalVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Zira') || v.name.includes('Google UK English Female') || v.name.includes('Female')));
+      if (naturalVoice) utterance.voice = naturalVoice;
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Web Speech API: Speech-to-Text (Microphone Input)
+    let recognition = null;
+    let isListening = false;
+
+    function initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        console.warn('Speech Recognition not supported in this browser.');
+        const micBtn = document.getElementById('mic-btn');
+        if (micBtn) micBtn.title = 'Speech recognition not supported in this browser (use Chrome or Edge)';
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onstart = () => {
+        isListening = true;
+        const micBtn = document.getElementById('mic-btn');
+        if (micBtn) micBtn.classList.add('listening');
+        const input = document.getElementById('user-input');
+        if (input) input.placeholder = '🎙️ Listening... Speak your Alexa command now!';
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        const input = document.getElementById('user-input');
+        if (input) {
+          input.value = transcript;
+          sendMessage(); // auto submit upon speech end
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('Speech recognition error:', event.error);
+        stopListening();
+      };
+
+      recognition.onend = () => {
+        stopListening();
+      };
+    }
+
+    function stopListening() {
+      isListening = false;
+      const micBtn = document.getElementById('mic-btn');
+      if (micBtn) micBtn.classList.remove('listening');
+      const input = document.getElementById('user-input');
+      if (input) input.placeholder = "Speak or type command (e.g. 'Book doctor for Alex', 'Turn on AC')...";
+    }
+
+    function toggleSpeechRecognition() {
+      if (!recognition) initSpeechRecognition();
+      if (!recognition) {
+        alert('Your browser does not support Speech Recognition. Please use Google Chrome or Microsoft Edge.');
+        return;
+      }
+
+      if (isListening) {
+        recognition.stop();
+        stopListening();
+      } else {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      appendChat('user', escapeHtml(text));
+
+      try {
+        const res = await fetch('/api/dashboard/simulate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({utterance: text})
+        });
+        const data = await res.json();
+
+        if (data.tool_used) {
+          appendChat('tool', `⚡ MCP Tool Executed: <strong>${data.tool_used}</strong>`);
+        }
+
+        const reply = data.response || 'Action processed.';
+        appendChat('alexa', reply);
+        speakAlexaResponse(reply); // Voice aloud!
+        fetchMetrics();
+        loadTasks();
+      } catch (err) {
+        appendChat('alexa', '⚠️ Error contacting Alexa+ backend.');
+      }
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // Connect to SSE Live Event Stream
+    function initSSE() {
+      const evtSource = new EventSource('/sse');
+      const indicator = document.getElementById('sse-indicator');
+
+      evtSource.onopen = () => {
+        indicator.innerText = '● SSE Connected';
+        indicator.style.color = '#34d399';
+        appendLog(new Date().toLocaleTimeString(), 'SSE_CONNECTED', 'Real-time telemetry link active.');
+      };
+
+      evtSource.addEventListener('tool_execution', (e) => {
+        appendLog(new Date().toLocaleTimeString(), 'TOOL_INVOKED', e.data);
+        fetchMetrics();
+        loadTasks();
+      });
+
+      evtSource.addEventListener('database_update', (e) => {
+        appendLog(new Date().toLocaleTimeString(), 'DATABASE_UPDATE', e.data);
+        fetchMetrics();
+        loadTasks();
+      });
+
+      evtSource.onerror = () => {
+        indicator.innerText = '○ Reconnecting...';
+        indicator.style.color = '#f59e0b';
+      };
+    }
+
+    // Init on page load
+    window.onload = () => {
+      fetchMetrics();
+      loadTasks();
+      initSSE();
+      initSpeechRecognition();
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => {};
+      }
+    };
+  </script>
+</body>
+</html>
