@@ -732,10 +732,14 @@
           </div>
         </div>
 
-        <div class="quick-chips">
+        <div class="quick-chips" style="flex-wrap: wrap;">
+          <span class="chip" onclick="quickSend('Ghar ke saare devices band kar do')">🏠 Saare Devices (All)</span>
+          <span class="chip" onclick="quickSend('Turn on living room lights')">💡 Lights</span>
+          <span class="chip" onclick="quickSend('Turn on living room AC')">❄️ AC & Climate</span>
+          <span class="chip" onclick="quickSend('Parde khol do')">🪟 Curtains (Parde)</span>
+          <span class="chip" onclick="quickSend('Safai shuru karo vacuum cleaner se')">🤖 Robot Vacuum</span>
+          <span class="chip" onclick="quickSend('Paani ki motor chalu karo')">💧 Water Motor</span>
           <span class="chip" onclick="quickSend('Book an appointment for Sarah tomorrow at 10 AM')">📅 Book Appointment</span>
-          <span class="chip" onclick="quickSend('Turn on all smart devices')">⚡ Devices Automations</span>
-          <span class="chip" onclick="quickSend('What tasks are on my schedule?')">📋 Query Schedule</span>
           <span class="chip" onclick="quickSend('System health report')">🩺 Health Checkup</span>
         </div>
 
@@ -865,9 +869,9 @@
         },
         {
           name: 'alexa_execute_automation',
-          desc: 'Executes automation across ALL smart devices: Whole-Home (All Devices), Lights (all rooms), Climate/AC, Ceiling Fans, Smart TV, Door Locks, and Geyser.',
-          props: ['action_type (smart_home_scene/device_control)', 'target_device_or_service (all_home_devices/living_room_lights/ceiling_fan/smart_tv/front_door_lock/smart_geyser)', 'parameters (dict)'],
-          example: 'Turn on all smart devices'
+          desc: 'Universal smart home execution engine for 100% of devices: Whole-Home (Saare Devices), Lights (all rooms), AC & Climate, Fans & Coolers, Smart TV, Door Locks, Curtains & Blinds (Parde), Robot Vacuum, Water Pump / Motor, Geyser, Air Purifiers, Kitchen Chimney / Microwave, Security Cameras, Smart Plugs, and any arbitrary custom device via Universal Regex NLP.',
+          props: ['action_type (smart_home_scene/device_control)', 'target_device_or_service (all_home_devices/living_room_lights/living_room_ac/ceiling_fan/smart_tv/front_door_lock/living_room_curtains/robot_vacuum_cleaner/water_motor_pump/smart_geyser/smart_air_purifier/kitchen_chimney/security_camera_system/smart_plug_outlet)', 'parameters (dict)'],
+          example: 'Ghar ke saare devices band kar do'
         },
         {
           name: 'alexa_query_tasks',

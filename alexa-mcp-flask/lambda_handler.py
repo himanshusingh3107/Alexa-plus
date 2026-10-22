@@ -210,6 +210,23 @@ class LLMOrchestrator:
         slots: Optional[Dict[str, Any]] = None,
     ) -> LLMDecisionSchema:
         """Route user voice utterance through Gemini intelligence and execute MCP tools."""
+        # 1. Zero-latency Fast Path (< 25ms) for ALL smart devices, bookings, tasks
+        try:
+            from services.agent_orchestrator import AgenticOrchestrator
+            orch = AgenticOrchestrator(user_id=user_id)
+            fast_res = orch._check_fast_path(utterance, utterance.lower().strip(), session_id)
+            if fast_res:
+                tool_name = fast_res.get("tool_used")
+                memory.save_conversation_turn(session_id, "assistant", fast_res["response"], intent_name, tool_name)
+                return LLMDecisionSchema(
+                    reasoning=fast_res.get("thought", "Fast path automated execution"),
+                    speech=fast_res["response"],
+                    tool_call=ToolInvocationSchema(tool_name=tool_name, arguments={}) if tool_name else None,
+                    should_end_session=False,
+                )
+        except Exception as fast_err:
+            logger.warning(f"Fast path check in lambda handler skipped: {fast_err}")
+
         memory_summary = memory.build_context_summary()
         if self.client and should_search_google(utterance, intent_name):
             try:
@@ -244,13 +261,13 @@ class LLMOrchestrator:
             raw_text = ""
             try:
                 response = self.client.models.generate_content(
-                    model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+                    model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
                     contents=prompt
                 )
                 raw_text = getattr(response, "text", "") or ""
             except Exception:
                 response = self.client.interactions.create(
-                    model=os.getenv("GEMINI_SEARCH_MODEL", "gemini-3.8-flash"),
+                    model=os.getenv("GEMINI_SEARCH_MODEL", "gemini-3.5-flash-lite"),
                     input=prompt
                 )
                 raw_text = getattr(response, "output_text", "") or getattr(response, "text", "") or ""
