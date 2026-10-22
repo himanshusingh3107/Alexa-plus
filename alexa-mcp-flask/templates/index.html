@@ -454,6 +454,25 @@
       box-shadow: 0 0 14px var(--primary-glow);
     }
 
+    .speech-lang-select {
+      background: rgba(20, 8, 10, 0.9);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: #ff8099;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 0 10px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .speech-lang-select:focus, .speech-lang-select:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+      color: #ffffff;
+    }
+
     button {
       background: linear-gradient(135deg, var(--primary), #b91c1c);
       color: #ffffff;
@@ -728,8 +747,13 @@
         </div>
 
         <div class="chat-input-bar">
+          <select id="speech-lang" class="speech-lang-select" onchange="updateSpeechLang()" title="Speech Recognition Language (Google Cloud)">
+            <option value="en-IN" selected>🇮🇳 English (India) / Hinglish</option>
+            <option value="hi-IN">🇮🇳 हिन्दी (Hindi)</option>
+            <option value="en-US">🇺🇸 English (US)</option>
+          </select>
           <input type="text" id="user-input" placeholder="Speak or type command (e.g. 'Book doctor for Alex', 'Turn on AC')..." onkeydown="if(event.key==='Enter') sendMessage()">
-          <button type="button" class="btn-mic" id="mic-btn" onclick="toggleSpeechRecognition()" title="Click to speak (Microphone)">
+          <button type="button" class="btn-mic" id="mic-btn" onclick="toggleSpeechRecognition()" title="Click to speak (Google Cloud Speech Recognition)">
             <svg id="mic-icon" viewBox="0 0 24 24">
               <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
               <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
@@ -1085,9 +1109,16 @@
       window.speechSynthesis.speak(utterance);
     }
 
-    // Web Speech API: Speech-to-Text (Microphone Input)
+    // Web Speech API: Speech-to-Text (Google Cloud Speech Recognition)
     let recognition = null;
     let isListening = false;
+
+    function updateSpeechLang() {
+      const select = document.getElementById('speech-lang');
+      if (recognition && select) {
+        recognition.lang = select.value;
+      }
+    }
 
     function initSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1100,23 +1131,44 @@
 
       recognition = new SpeechRecognition();
       recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 3;
+
+      const langSelect = document.getElementById('speech-lang');
+      recognition.lang = langSelect ? langSelect.value : 'en-IN';
 
       recognition.onstart = () => {
         isListening = true;
         const micBtn = document.getElementById('mic-btn');
         if (micBtn) micBtn.classList.add('listening');
         const input = document.getElementById('user-input');
-        if (input) input.placeholder = '🎙️ Listening... Speak your Alexa command now!';
+        if (input) input.placeholder = '🎙️ Google Speech listening... Speak command now!';
       };
 
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
         const input = document.getElementById('user-input');
         if (input) {
-          input.value = transcript;
-          sendMessage(); // auto submit upon speech end
+          if (interimTranscript) {
+            input.value = interimTranscript;
+          }
+          if (finalTranscript) {
+            input.value = finalTranscript.trim();
+            stopListening();
+            setTimeout(() => {
+              sendMessage(); // auto send finalized command
+            }, 250);
+          }
         }
       };
 

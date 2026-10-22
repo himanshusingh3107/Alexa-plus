@@ -133,6 +133,39 @@ def create_app() -> Flask:
             logger.error(f"Error in dashboard simulation: {exc}", exc_info=True)
             return jsonify({"error": str(exc), "response": "Encountered an issue executing the agent."}), 500
 
+    @app.route("/api/transcribe", methods=["POST"])
+    def transcribe_audio():
+        """Transcribe uploaded voice audio using Google Gemini Multimodal model."""
+        if "audio" not in request.files:
+            return jsonify({"error": "No audio file provided"}), 400
+
+        audio_file = request.files["audio"]
+        audio_bytes = audio_file.read()
+        mime_type = audio_file.content_type or "audio/webm"
+
+        try:
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+            prompt = (
+                "Transcribe this spoken voice command or question into accurate text. "
+                "Accurately recognize Indian English, Hindi, and Hinglish phrases (e.g. 'andhera hai', 'lights band karo', 'turn on AC'). "
+                "Return ONLY the plain transcript text with no extra commentary or tags."
+            )
+            response = client.models.generate_content(
+                model=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"),
+                contents=[
+                    types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
+                    prompt,
+                ],
+            )
+            transcript = (response.text or "").strip()
+            return jsonify({"success": True, "transcript": transcript}), 200
+        except Exception as exc:
+            logger.error(f"Google Gemini audio transcription error: {exc}", exc_info=True)
+            return jsonify({"error": str(exc)}), 500
+
     @app.route("/health", methods=["GET"])
     def health():
         """Health check endpoint for orchestration, uptime probes, and load balancers."""
