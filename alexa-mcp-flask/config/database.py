@@ -428,3 +428,35 @@ def get_system_counts() -> Dict[str, Any]:
             "database_backend": "Turso LibSQL (Cloud) + SQLite (Local)" if TURSO_CLIENT else "SQLite (Local)",
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
+
+def reset_database_data() -> Dict[str, Any]:
+    """Clear demo bookings, event logs, and conversation history for a fresh start."""
+    with get_db_session() as db:
+        tasks_deleted = db.query(TaskBooking).delete()
+        events_deleted = db.query(LiveEventLog).delete()
+        db.commit()
+
+        # Also reset conversation history if table exists
+        try:
+            from memory_engine import ConversationHistory
+            db.query(ConversationHistory).delete()
+            db.commit()
+        except Exception:
+            pass
+
+        # If Turso client is active, clear Turso as well
+        if TURSO_ENABLED and TURSO_CLIENT:
+            try:
+                TURSO_CLIENT.execute("DELETE FROM task_bookings;")
+                TURSO_CLIENT.execute("DELETE FROM live_event_logs;")
+            except Exception as e:
+                logger.warning(f"Turso reset warning: {e}")
+
+        logger.info(f"Database reset: deleted {tasks_deleted} tasks and {events_deleted} event logs.")
+        return {
+            "success": True,
+            "tasks_deleted": tasks_deleted,
+            "events_deleted": events_deleted,
+            "message": "Database and telemetry reset to fresh state.",
+        }
