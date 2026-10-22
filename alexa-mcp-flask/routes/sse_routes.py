@@ -6,7 +6,7 @@ initial handshake, keep-alive pings, and real-time live database updates.
 
 import os
 import time
-import pprint
+import json
 import uuid
 import queue
 import logging
@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
 from flask import Blueprint, Response, request, stream_with_context
-from config.database import query_latest_events, record_live_event
+from config.database import query_latest_events, record_live_event, get_max_event_id
 
 logger = logging.getLogger(__name__)
 
@@ -74,23 +74,21 @@ def broadcast_sse(event_name: str, data: Any) -> None:
 
 
 def format_sse_message(event: str, data: Any) -> str:
-    """Format payload according to the SSE standard specification in pure Python."""
+    """Format payload according to the SSE standard specification in clean single-line JSON."""
     if isinstance(data, (dict, list)):
-        data_str = pprint.pformat(data, sort_dicts=False)
+        data_str = json.dumps(data)
     else:
         data_str = str(data)
 
-    lines = data_str.split("\n")
-    data_payload = "\n".join(f"data: {line}" for line in lines)
-    return f"event: {event}\n{data_payload}\n\n"
+    return f"event: {event}\ndata: {data_str}\n\n"
 
 
 def sse_event_stream(session_id: str, session_queue: queue.Queue):
     """Generator streaming events, keep-alive pings, and database updates."""
     logger.info(f"Starting SSE event stream generator for session: {session_id}")
 
-    recent = query_latest_events(limit=1)
-    last_db_event_id = recent[0]["id"] if recent else 0
+    # Start from the current max event ID so historical events are not dumped upon connection
+    last_db_event_id = get_max_event_id()
 
     try:
         # 1. Initial MCP handshake event: endpoint location for POST requests
@@ -106,9 +104,6 @@ def sse_event_stream(session_id: str, session_queue: queue.Queue):
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         yield format_sse_message("connected", welcome_payload)
-
-        # Log connection event to SQL database
-        record_live_event("SSE_CONNECTED", {"session_id": session_id}, session_id=session_id)
 
         last_ping_time = time.time()
         last_db_poll_time = time.time()
@@ -154,7 +149,6 @@ def sse_event_stream(session_id: str, session_queue: queue.Queue):
         logger.error(f"Unexpected error in SSE stream for {session_id}: {exc}", exc_info=True)
     finally:
         unregister_session(session_id)
-        record_live_event("SSE_DISCONNECTED", {"session_id": session_id}, session_id=session_id)
 
 
 @sse_bp.route("/sse", methods=["GET"])

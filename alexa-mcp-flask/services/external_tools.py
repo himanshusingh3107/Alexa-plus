@@ -318,23 +318,10 @@ def execute_automation(arguments: Dict[str, Any], session_id: Optional[str] = No
         session_id=session_id,
     )
 
-    event = record_live_event(
-        event_type="AUTOMATION_EXECUTED",
-        details={
-            "task_id": task["id"],
-            "action_type": action_type,
-            "target": target,
-            "parameters": parameters,
-            "executed_at": datetime.now(timezone.utc).isoformat(),
-        },
-        session_id=session_id,
-    )
-
     return {
         "success": True,
         "message": f"Automation '{action_type}' on '{target}' completed successfully.",
         "task_id": task["id"],
-        "event_id": event["id"],
         "action_type": action_type,
         "target": target,
         "parameters": parameters,

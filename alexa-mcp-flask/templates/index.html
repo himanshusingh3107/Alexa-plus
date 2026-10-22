@@ -763,7 +763,7 @@
               <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
             </svg>
           </button>
-          <button onclick="sendMessage()">Send Command</button>
+          <button id="btn-send" onclick="sendMessage()">Send Command</button>
         </div>
       </div>
 
@@ -784,7 +784,7 @@
     <div class="panel" style="margin-top: 24px;">
       <div class="panel-header">
         <h2>🗄️ Recent Voice Tasks & Appointments in SQL Database</h2>
-        <button class="btn-secondary" onclick="loadTasks()">Refresh Tasks</button>
+        <button class="btn-secondary" id="btn-refresh-tasks" onclick="handleRefreshTasks()">Refresh Tasks</button>
       </div>
 
       <div style="overflow-x: auto;">
@@ -1095,22 +1095,63 @@
           const tasks = await res.json();
           window._currentTasks = tasks;
           const tbody = document.getElementById('tasks-tbody');
+          if (!tbody) return;
           if (!tasks || tasks.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">No tasks in database yet. Try creating one!</td></tr>';
             return;
           }
-          tbody.innerHTML = tasks.map(t => `
-            <tr>
-              <td style="font-weight:600;">${escapeHtml(t.title)}</td>
-              <td><span style="text-transform: capitalize; color:#38bdf8;">${escapeHtml(t.category)}</span></td>
-              <td><span class="tag-status status-${t.status.toLowerCase()}">${escapeHtml(t.status)}</span></td>
-              <td style="color:var(--text-muted); font-size:12px;">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td>
-              <td style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748b;">${t.id.slice(0, 8)}...</td>
-            </tr>
-          `).join('');
+          tbody.innerHTML = tasks.map(t => {
+            const status = (t.status || 'completed').toLowerCase();
+            const title = escapeHtml(t.title || 'Untitled Task');
+            const cat = escapeHtml(t.category || 'general');
+            const idShort = (t.id ? t.id.slice(0, 8) : '--------');
+            let timeStr = 'Just now';
+            if (t.created_at) {
+              try {
+                timeStr = new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+              } catch (e) {
+                timeStr = String(t.created_at).slice(11, 19) || 'Recently';
+              }
+            }
+            return `
+              <tr>
+                <td style="font-weight:600;">${title}</td>
+                <td><span style="text-transform: capitalize; color:#38bdf8;">${cat}</span></td>
+                <td><span class="tag-status status-${status}">${escapeHtml(t.status || 'COMPLETED')}</span></td>
+                <td style="color:var(--text-muted); font-size:12px;">${timeStr}</td>
+                <td style="font-family:'JetBrains Mono', monospace; font-size:11px; color:#64748b;">${idShort}...</td>
+              </tr>
+            `;
+          }).join('');
         }
       } catch (err) {
         console.error('Tasks fetch error:', err);
+      }
+    }
+
+    // Refresh button click handler with interactive feedback
+    async function handleRefreshTasks() {
+      const btn = document.getElementById('btn-refresh-tasks');
+      if (btn) {
+        btn.innerText = 'Refreshing...';
+        btn.style.opacity = '0.6';
+      }
+      try {
+        await Promise.all([fetchMetrics(), loadTasks()]);
+        if (btn) {
+          btn.innerText = '✓ Refreshed';
+          btn.style.color = '#34d399';
+          setTimeout(() => {
+            btn.innerText = 'Refresh Tasks';
+            btn.style.color = '';
+            btn.style.opacity = '1';
+          }, 1200);
+        }
+      } catch (e) {
+        if (btn) {
+          btn.innerText = 'Refresh Tasks';
+          btn.style.opacity = '1';
+        }
       }
     }
 
@@ -1160,6 +1201,7 @@
     // Web Speech API: Speech-to-Text (Google Cloud Speech Recognition)
     let recognition = null;
     let isListening = false;
+    let speechTriggered = false;
 
     function updateSpeechLang() {
       const select = document.getElementById('speech-lang');
@@ -1187,6 +1229,7 @@
 
       recognition.onstart = () => {
         isListening = true;
+        speechTriggered = false;
         const micBtn = document.getElementById('mic-btn');
         if (micBtn) micBtn.classList.add('listening');
         const input = document.getElementById('user-input');
@@ -1210,12 +1253,13 @@
           if (interimTranscript) {
             input.value = interimTranscript;
           }
-          if (finalTranscript) {
+          if (finalTranscript && !speechTriggered) {
+            speechTriggered = true; // Guard against multiple speech recognition triggers
             input.value = finalTranscript.trim();
             stopListening();
             setTimeout(() => {
-              sendMessage(); // auto send finalized command
-            }, 250);
+              sendMessage(); // auto send finalized command exactly ONCE
+            }, 200);
           }
         }
       };
@@ -1257,11 +1301,23 @@
       }
     }
 
+    let isSending = false;
+
     async function sendMessage() {
+      if (isSending) return; // Prevent concurrent duplicate submissions
       const input = document.getElementById('user-input');
       const text = input.value.trim();
       if (!text) return;
+
+      isSending = true;
       input.value = '';
+
+      const sendBtn = document.getElementById('btn-send');
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.innerText = 'Thinking...';
+        sendBtn.style.opacity = '0.7';
+      }
 
       appendChat('user', escapeHtml(text));
 
@@ -1291,6 +1347,13 @@
         loadTasks();
       } catch (err) {
         appendChat('alexa', '⚠️ Error contacting Alexa+ backend.');
+      } finally {
+        isSending = false;
+        if (sendBtn) {
+          sendBtn.disabled = false;
+          sendBtn.innerText = 'Send Command';
+          sendBtn.style.opacity = '1';
+        }
       }
     }
 
@@ -1298,7 +1361,9 @@
       return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // Connect to SSE Live Event Stream
+    // Connect to SSE Live Event Stream with log deduplication
+    const seenEventIds = new Set();
+
     function initSSE() {
       const evtSource = new EventSource('/sse');
       const indicator = document.getElementById('sse-indicator');
@@ -1306,7 +1371,6 @@
       evtSource.onopen = () => {
         indicator.innerText = '● SSE Connected';
         indicator.style.color = '#34d399';
-        // Log once only when first connected
         if (!window._sseEverConnected) {
           appendLog(new Date().toLocaleTimeString(), 'SSE_CONNECTED', 'Real-time telemetry link active.');
           window._sseEverConnected = true;
@@ -1322,12 +1386,16 @@
       evtSource.addEventListener('database_update', (e) => {
         try {
           const parsed = JSON.parse(e.data);
-          // Only show meaningful database events
+          if (parsed && parsed.id) {
+            if (seenEventIds.has(parsed.id)) return; // Deduplicate
+            seenEventIds.add(parsed.id);
+            if (seenEventIds.size > 200) seenEventIds.clear();
+          }
           if (parsed && (parsed.event_type || parsed.details)) {
-            appendLog(new Date().toLocaleTimeString(), parsed.event_type || 'DB_UPDATE', JSON.stringify(parsed.details || {}));
+            const timeStr = parsed.created_at ? new Date(parsed.created_at).toLocaleTimeString() : new Date().toLocaleTimeString();
+            appendLog(timeStr, parsed.event_type || 'DB_UPDATE', JSON.stringify(parsed.details || {}));
           }
         } catch(err) {
-          // If raw text
           if (e.data && !e.data.includes('None')) {
             appendLog(new Date().toLocaleTimeString(), 'DB_UPDATE', e.data);
           }
@@ -1343,7 +1411,6 @@
       });
 
       evtSource.onerror = () => {
-        // Browser auto-reconnects in background
         indicator.innerText = '○ Syncing...';
         indicator.style.color = '#f59e0b';
       };

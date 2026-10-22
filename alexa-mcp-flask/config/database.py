@@ -411,6 +411,14 @@ def query_latest_events(
         return [evt.to_dict() for evt in events]
 
 
+def get_max_event_id() -> int:
+    """Return the highest event ID currently in live_event_logs for clean SSE sync."""
+    with get_db_session() as db:
+        from sqlalchemy import func
+        val = db.query(func.max(LiveEventLog.id)).scalar()
+        return int(val) if val else 0
+
+
 def get_system_counts() -> Dict[str, Any]:
     """Retrieve operational statistics as a Python dictionary."""
     with get_db_session() as db:
