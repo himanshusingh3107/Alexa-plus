@@ -121,62 +121,175 @@ class AgenticOrchestrator:
         }
 
     def _check_fast_path(self, utterance: str, lowered: str, session_id: str) -> Optional[Dict[str, Any]]:
-        """Instant sub-25ms execution for hardware, bookings, tasks, and chit-chat."""
-        # 1. Lights ON / Brighten
-        if any(w in lowered for w in ["turn on light", "turn on lights", "lights on", "light on", "andhera", "light chalu", "light jalao"]):
+        """Instant sub-25ms execution for all smart devices, bookings, tasks, and chit-chat."""
+        is_turn_off = any(w in lowered for w in ["off", "band", "bujhao", "close", "stop", "lock"])
+        is_turn_on = not is_turn_off or any(w in lowered for w in ["on", "chalu", "jalao", "start", "unlock", "open"])
+
+        # ------------------------------------------------------------------
+        # 0. ALL DEVICES / SAARE DEVICES (Whole-Home Automation)
+        # ------------------------------------------------------------------
+        is_all_devices = any(w in lowered for w in [
+            "all device", "all devices", "saare device", "saare devices", "sare device", "sare devices",
+            "sabhi device", "sabhi devices", "har device", "ghar ke saare", "ghar ke sabhi", "everything",
+            "whole home", "all smart devices"
+        ])
+        if is_all_devices:
+            action = "turn_off" if any(w in lowered for w in ["off", "band", "bujha", "close", "stop"]) else "turn_on"
             call_tool("alexa_execute_automation", {
                 "action_type": "smart_home_scene",
-                "target_device_or_service": "living_room_lights",
-                "parameters": {"command": "turn_on", "brightness": 100, "scene": "illuminated"}
+                "target_device_or_service": "all_home_devices",
+                "parameters": {
+                    "command": action,
+                    "devices": ["lights", "ac", "fans", "smart_tv", "geyser"],
+                    "scene": "all_devices_active" if action == "turn_on" else "all_devices_secured"
+                }
             }, session_id=session_id)
+            if action == "turn_on":
+                speech = "Maine ghar ke saare smart devices turn on kar diye hain (lights, AC, fans, TV)." if any(h in lowered for h in ["karo", "saare", "sare", "sabhi"]) else "I have turned on all smart devices across your home."
+            else:
+                speech = "Maine ghar ke saare smart devices band kar diye hain aur system ko secure kar diya hai." if any(h in lowered for h in ["karo", "saare", "sare", "sabhi"]) else "I have turned off all smart devices in your home."
             return {
                 "success": True,
-                "response": "Maine living room ki lights turn on kar di hain." if any(h in lowered for h in ["andhera", "karo", "chalu"]) else "I have turned on the living room lights for you.",
+                "response": speech,
                 "tool_used": "alexa_execute_automation",
-                "thought": "Instant lighting automation executed.",
+                "thought": f"Whole-home automation: {action} applied to all connected devices.",
             }
 
-        # 2. Lights OFF / Dim
-        if any(w in lowered for w in ["dim", "dim the light", "turn off light", "turn off lights", "lights off", "light off", "light band", "light bujhao"]):
+        # ------------------------------------------------------------------
+        # 1. LIGHTS (Living Room, Bedroom, Kitchen, Balcony, Dimming)
+        # ------------------------------------------------------------------
+        if any(w in lowered for w in ["light", "lights", "lamp", "bulb", "andhera", "roshni", "dim"]):
             is_dim = "dim" in lowered
+            room = "bedroom" if "bedroom" in lowered else ("kitchen" if "kitchen" in lowered else ("balcony" if "balcony" in lowered else "living_room"))
+            target_device = f"{room}_lights"
+
+            if is_dim:
+                cmd, level = "dim", 25
+            elif any(w in lowered for w in ["off", "band", "bujha", "close"]):
+                cmd, level = "turn_off", 0
+            else:
+                cmd, level = "turn_on", 100
+
             call_tool("alexa_execute_automation", {
                 "action_type": "smart_home_scene",
-                "target_device_or_service": "living_room_lights",
-                "parameters": {"command": "dim" if is_dim else "turn_off", "brightness": 20 if is_dim else 0}
+                "target_device_or_service": target_device,
+                "parameters": {"command": cmd, "brightness": level, "scene": "illuminated" if cmd == "turn_on" else "dark"}
             }, session_id=session_id)
+
+            room_label = room.replace("_", " ").title()
+            if is_dim:
+                speech = f"I've dimmed the {room_label} lights to 25% for you."
+            elif cmd == "turn_on":
+                speech = f"Maine {room_label} ki lights on kar di hain." if any(h in lowered for h in ["andhera", "karo", "chalu"]) else f"I have turned on the {room_label} lights."
+            else:
+                speech = f"Maine {room_label} ki lights band kar di hain." if "band" in lowered else f"I've turned off the {room_label} lights."
+
             return {
                 "success": True,
-                "response": "I've dimmed the lights for you so you can rest." if is_dim else ("Maine lights band kar di hain." if "band" in lowered else "I've turned off the living room lights."),
+                "response": speech,
                 "tool_used": "alexa_execute_automation",
-                "thought": "Instant lighting automation executed.",
+                "thought": f"Lighting automation executed on {target_device}.",
             }
 
-        # 3. AC ON / Garmi
-        if any(w in lowered for w in ["turn on ac", "ac on", "ac chalu", "garmi"]):
+        # ------------------------------------------------------------------
+        # 2. FANS (Ceiling Fan, Exhaust Fan, Speed)
+        # ------------------------------------------------------------------
+        if any(w in lowered for w in ["fan", "fans", "pankha", "ceiling fan", "exhaust"]):
+            target_fan = "exhaust_fan" if "exhaust" in lowered else "ceiling_fan"
+            action = "turn_off" if any(w in lowered for w in ["off", "band", "bujha", "stop"]) else "turn_on"
+            call_tool("alexa_execute_automation", {
+                "action_type": "device_control",
+                "target_device_or_service": target_fan,
+                "parameters": {"command": action, "speed": 3}
+            }, session_id=session_id)
+            speech = f"Maine {target_fan.replace('_', ' ')} {'chalu' if action == 'turn_on' else 'band'} kar diya hai." if any(h in lowered for h in ["karo", "chalu", "band"]) else f"I have {'turned on' if action == 'turn_on' else 'turned off'} the {target_fan.replace('_', ' ')}."
+            return {
+                "success": True,
+                "response": speech,
+                "tool_used": "alexa_execute_automation",
+                "thought": f"Fan control: {action} on {target_fan}.",
+            }
+
+        # ------------------------------------------------------------------
+        # 3. SMART TV / ENTERTAINMENT / SPEAKERS
+        # ------------------------------------------------------------------
+        if any(w in lowered for w in ["tv", "television", "smart tv", "speaker", "music", "soundbar"]):
+            target = "smart_speaker" if any(w in lowered for w in ["speaker", "music"]) else "smart_tv"
+            action = "turn_off" if any(w in lowered for w in ["off", "band", "stop", "mute"]) else "turn_on"
+            call_tool("alexa_execute_automation", {
+                "action_type": "device_control",
+                "target_device_or_service": target,
+                "parameters": {"command": action}
+            }, session_id=session_id)
+            speech = f"Maine {target.replace('_', ' ').upper()} {'on' if action == 'turn_on' else 'band'} kar diya hai." if any(h in lowered for h in ["karo", "band"]) else f"I have {'powered on' if action == 'turn_on' else 'switched off'} the {target.replace('_', ' ').upper()}."
+            return {
+                "success": True,
+                "response": speech,
+                "tool_used": "alexa_execute_automation",
+                "thought": f"Entertainment control: {action} on {target}.",
+            }
+
+        # ------------------------------------------------------------------
+        # 4. SMART LOCKS & DOORS
+        # ------------------------------------------------------------------
+        if any(w in lowered for w in ["door", "darwaza", "gate", "lock", "unlock"]):
+            is_unlock = any(w in lowered for w in ["unlock", "kholo", "open"])
+            action = "unlock" if is_unlock else "lock"
+            call_tool("alexa_execute_automation", {
+                "action_type": "device_control",
+                "target_device_or_service": "front_door_lock",
+                "parameters": {"command": action, "security_level": "high"}
+            }, session_id=session_id)
+            speech = f"Maine front door ko {action} kar diya hai." if any(h in lowered for h in ["karo", "darwaza"]) else f"I have {action}ed the front door."
+            return {
+                "success": True,
+                "response": speech,
+                "tool_used": "alexa_execute_automation",
+                "thought": f"Security automation: door {action}.",
+            }
+
+        # ------------------------------------------------------------------
+        # 5. GEYSER / HEATER / APPLIANCES
+        # ------------------------------------------------------------------
+        if any(w in lowered for w in ["geyser", "heater", "water heater", "coffee", "purifier", "plug"]):
+            target = "smart_geyser" if any(w in lowered for w in ["geyser", "water heater"]) else ("coffee_maker" if "coffee" in lowered else "smart_heater")
+            action = "turn_off" if any(w in lowered for w in ["off", "band", "stop"]) else "turn_on"
+            call_tool("alexa_execute_automation", {
+                "action_type": "device_control",
+                "target_device_or_service": target,
+                "parameters": {"command": action}
+            }, session_id=session_id)
+            speech = f"Maine {target.replace('_', ' ')} {'on' if action == 'turn_on' else 'band'} kar diya hai." if any(h in lowered for h in ["karo", "band"]) else f"I have {'turned on' if action == 'turn_on' else 'turned off'} the {target.replace('_', ' ')}."
+            return {
+                "success": True,
+                "response": speech,
+                "tool_used": "alexa_execute_automation",
+                "thought": f"Appliance automation: {action} on {target}.",
+            }
+
+        # ------------------------------------------------------------------
+        # 6. AIR CONDITIONER / CLIMATE (AC, Cooler, Thermostat)
+        # ------------------------------------------------------------------
+        if any(w in lowered for w in ["ac", "air conditioner", "thermostat", "cooler", "garmi", "thand"]):
+            if any(w in lowered for w in ["off", "band", "thand"]):
+                action = "turn_off"
+                params = {"command": "turn_off"}
+                speech = "Maine AC adjust kar diya hai taaki thand na lage." if "thand" in lowered else "I've turned off the living room AC."
+            else:
+                action = "turn_on"
+                params = {"command": "turn_on", "target_temp": 71, "mode": "cool"}
+                speech = "Garmi door karne ke liye AC cool mode par set kar diya hai." if "garmi" in lowered else "I have turned on the air conditioner to 71 degrees cool mode."
+
             call_tool("alexa_execute_automation", {
                 "action_type": "smart_home_scene",
                 "target_device_or_service": "living_room_ac",
-                "parameters": {"command": "turn_on", "target_temp": 71, "mode": "cool"}
+                "parameters": params
             }, session_id=session_id)
             return {
                 "success": True,
-                "response": "AC cool mode par set kar diya hai." if "garmi" in lowered else "I have turned on the air conditioner to cool mode.",
+                "response": speech,
                 "tool_used": "alexa_execute_automation",
-                "thought": "Instant climate control scene triggered.",
-            }
-
-        # 4. AC OFF / Thand
-        if any(w in lowered for w in ["turn off ac", "ac off", "ac band", "thand"]):
-            call_tool("alexa_execute_automation", {
-                "action_type": "smart_home_scene",
-                "target_device_or_service": "living_room_ac",
-                "parameters": {"command": "turn_off"}
-            }, session_id=session_id)
-            return {
-                "success": True,
-                "response": "AC adjust kar diya hai taaki thand na lage." if "thand" in lowered else "I've turned off the air conditioner.",
-                "tool_used": "alexa_execute_automation",
-                "thought": "Instant climate control scene triggered.",
+                "thought": f"Climate scene automation: {action}.",
             }
 
         # 5. Bookings & Appointments (Instant regex extraction)

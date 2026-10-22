@@ -734,7 +734,7 @@
 
         <div class="quick-chips">
           <span class="chip" onclick="quickSend('Book an appointment for Sarah tomorrow at 10 AM')">📅 Book Appointment</span>
-          <span class="chip" onclick="quickSend('Turn on living room lights and AC')">⚡ Devices Automations</span>
+          <span class="chip" onclick="quickSend('Turn on all smart devices')">⚡ Devices Automations</span>
           <span class="chip" onclick="quickSend('What tasks are on my schedule?')">📋 Query Schedule</span>
           <span class="chip" onclick="quickSend('System health report')">🩺 Health Checkup</span>
         </div>
@@ -865,9 +865,9 @@
         },
         {
           name: 'alexa_execute_automation',
-          desc: 'Executes smart home scenes or device workflows (e.g. lights, AC, temperature control, notifications).',
-          props: ['action_type (smart_home_scene/device_control)', 'target_device_or_service (living_room_lights/living_room_ac)', 'parameters (dict)'],
-          example: 'Turn on the living room lights'
+          desc: 'Executes automation across ALL smart devices: Whole-Home (All Devices), Lights (all rooms), Climate/AC, Ceiling Fans, Smart TV, Door Locks, and Geyser.',
+          props: ['action_type (smart_home_scene/device_control)', 'target_device_or_service (all_home_devices/living_room_lights/ceiling_fan/smart_tv/front_door_lock/smart_geyser)', 'parameters (dict)'],
+          example: 'Turn on all smart devices'
         },
         {
           name: 'alexa_query_tasks',
