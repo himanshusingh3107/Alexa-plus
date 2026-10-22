@@ -111,6 +111,17 @@ def create_app() -> Flask:
         """Returns the latest 20 voice bookings and tasks."""
         return jsonify(query_task_bookings(limit=20)), 200
 
+    @app.route("/api/dashboard/reset", methods=["POST"])
+    def dashboard_reset():
+        """Reset all demo tasks, bookings, event logs, and conversation history."""
+        try:
+            from config.database import reset_database_data
+            result = reset_database_data()
+            return jsonify(result), 200
+        except Exception as exc:
+            logger.error(f"Error resetting database: {exc}", exc_info=True)
+            return jsonify({"error": str(exc), "success": False}), 500
+
     @app.route("/api/dashboard/simulate", methods=["POST"])
     def dashboard_simulate():
         """Interactive simulator: parses natural speech/Hinglish/English commands and invokes MCP tools live via AgenticOrchestrator."""

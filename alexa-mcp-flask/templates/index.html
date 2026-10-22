@@ -685,7 +685,7 @@
           <span class="status-pulse"></span>
           <span id="server-status-text">MCP SERVER ONLINE</span>
         </div>
-        <button class="btn-secondary" onclick="fetchMetrics()">Refresh Data</button>
+        <button class="btn-secondary" id="btn-reset" onclick="confirmResetData()" title="Reset all demo tasks and start fresh">🗑️ Reset Data</button>
       </div>
     </header>
 
@@ -1018,6 +1018,50 @@
         </div>
       `;
       openModal('🗄️', 'Database Storage Architecture', 'Hybrid SQLite + Turso Distributed LibSQL', html);
+    }
+
+    // Reset Data Handler (Workable)
+    async function confirmResetData() {
+      if (!confirm("Are you sure you want to reset all tasks, bookings, and demo telemetry data? This will clear the database and start fresh.")) {
+        return;
+      }
+      const btn = document.getElementById('btn-reset');
+      if (btn) btn.innerText = "Resetting...";
+
+      try {
+        const res = await fetch('/api/dashboard/reset', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          // Reset chat container
+          const chatBox = document.getElementById('chat-box');
+          if (chatBox) {
+            chatBox.innerHTML = `
+              <div class="chat-msg msg-alexa">
+                👋 <strong>Welcome to Alexa+!</strong><br>
+                Database and telemetry have been reset to a fresh state. Try speaking or typing an utterance above to execute live backend tasks.
+              </div>
+            `;
+          }
+          // Reset log terminal
+          const logBox = document.getElementById('log-box');
+          if (logBox) {
+            logBox.innerHTML = `
+              <div class="log-line"><span class="log-time">[${new Date().toLocaleTimeString()}]</span> <span class="log-event">SYSTEM_RESET</span> All demo records and telemetry cleared.</div>
+            `;
+          }
+          // Refresh metrics and tables
+          await fetchMetrics();
+          await loadTasks();
+          alert("✅ Database & Telemetry have been reset to a fresh state!");
+        } else {
+          alert("⚠️ Could not reset: " + (data.error || "Unknown error"));
+        }
+      } catch (err) {
+        console.error("Reset error:", err);
+        alert("⚠️ Error contacting server to reset data.");
+      } finally {
+        if (btn) btn.innerText = "🗑️ Reset Data";
+      }
     }
 
     // Fetch metrics from backend
