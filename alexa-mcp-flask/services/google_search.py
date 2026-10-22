@@ -1,4 +1,4 @@
-"""Google Search and Knowledge grounding for general Alexa+ questions."""
+"""Google Knowledge answering for general Alexa+ questions with ultra-low latency."""
 
 import logging
 import os
@@ -59,7 +59,7 @@ def should_search_google(utterance: str, intent_name: Optional[str] = None) -> b
 
 
 def google_search_answer(utterance: str, client: Any = None) -> Optional[str]:
-    """Answer a general question using Gemini grounded with Google knowledge."""
+    """Answer a general question using Gemini with low latency (< 1s)."""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         logger.warning("GEMINI_API_KEY is not set in environment.")
@@ -67,51 +67,32 @@ def google_search_answer(utterance: str, client: Any = None) -> Optional[str]:
 
     try:
         from google import genai
+        from google.genai import types
+
         if client is None:
             client = genai.Client(api_key=api_key)
 
         prompt = (
-            "You are Alexa+, a smart voice assistant. Answer the user's question clearly, "
-            "concisely, and accurately in 2 to 3 sentences suitable to be spoken aloud. "
-            "Do NOT use markdown symbols, bullet points, or asterisks.\n\n"
+            "You are Alexa+, a voice assistant. Provide a clear, natural, and concise answer "
+            "in 1 to 2 sentences suitable to be spoken aloud. Do NOT use markdown symbols, bullet points, or asterisks.\n\n"
             f"Question: {utterance}"
         )
 
-        models_to_try = [
-            os.getenv("GEMINI_SEARCH_MODEL", "gemini-3.5-flash-lite"),
-            os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash"),
-        ]
+        model = os.getenv("GEMINI_SEARCH_MODEL", "gemini-3.5-flash-lite")
 
-        # 1. Try search grounding first, fall back cleanly if quota exceeded
-        for model in models_to_try:
-            try:
-                from google.genai import types
-                response = client.models.generate_content(
-                    model=model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        tools=[types.Tool(google_search=types.GoogleSearch())]
-                    ),
-                )
-                if hasattr(response, "text") and response.text:
-                    clean_text = response.text.replace("*", "").replace("#", "").strip()
-                    if clean_text:
-                        return clean_text
-            except Exception as search_err:
-                logger.info(f"Search grounding with {model} unavailable ({search_err}); falling back to standard generation.")
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                max_output_tokens=100,
+                temperature=0.3,
+            ),
+        )
 
-            # 2. Standard direct generation (super fast, no 429 quota exhaustion)
-            try:
-                response = client.models.generate_content(
-                    model=model,
-                    contents=prompt,
-                )
-                if hasattr(response, "text") and response.text:
-                    clean_text = response.text.replace("*", "").replace("#", "").strip()
-                    if clean_text:
-                        return clean_text
-            except Exception as gen_err:
-                logger.warning(f"Standard generation with {model} failed: {gen_err}")
+        if hasattr(response, "text") and response.text:
+            clean_text = response.text.replace("*", "").replace("#", "").strip()
+            if clean_text:
+                return clean_text
 
     except Exception as exc:
         logger.error(f"Error getting answer from Gemini: {exc}", exc_info=True)
