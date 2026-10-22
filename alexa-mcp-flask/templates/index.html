@@ -160,13 +160,168 @@
       border-radius: 16px;
       padding: 20px;
       backdrop-filter: blur(12px);
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      cursor: pointer;
+      position: relative;
     }
 
     .metric-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255, 45, 85, 0.5);
-      box-shadow: 0 6px 20px rgba(255, 45, 85, 0.15);
+      transform: translateY(-4px);
+      border-color: rgba(255, 45, 85, 0.65);
+      box-shadow: 0 8px 24px rgba(255, 45, 85, 0.22);
+    }
+
+    .metric-card-tap-hint {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      font-size: 11px;
+      color: rgba(255, 45, 85, 0.6);
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.2s ease;
+    }
+
+    .metric-card:hover .metric-card-tap-hint {
+      color: #ff2d55;
+      transform: translateX(2px);
+    }
+
+    /* Modal Dialog & Overlay Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(5, 1, 2, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+      box-sizing: border-box;
+      animation: modalFadeIn 0.2s ease;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-card {
+      background: #14070a;
+      border: 1px solid rgba(255, 45, 85, 0.35);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(255, 45, 85, 0.25);
+      animation: modalSlideUp 0.25s ease;
+      overflow: hidden;
+    }
+
+    @keyframes modalSlideUp {
+      from { transform: translateY(20px) scale(0.97); }
+      to { transform: translateY(0) scale(1); }
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(25, 8, 12, 0.6);
+    }
+
+    .modal-icon-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(255, 45, 85, 0.15);
+      border: 1px solid rgba(255, 45, 85, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      color: #ff2d55;
+    }
+
+    .modal-close-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #aaa;
+      font-size: 24px;
+      line-height: 1;
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: all 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(255, 45, 85, 0.25);
+      border-color: #ff2d55;
+      color: #fff;
+    }
+
+    .modal-body {
+      padding: 22px 24px;
+      overflow-y: auto;
+      font-size: 14px;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    .tool-detail-item {
+      background: rgba(25, 8, 12, 0.5);
+      border: 1px solid rgba(255, 45, 85, 0.15);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .tool-detail-item:hover {
+      border-color: rgba(255, 45, 85, 0.4);
+    }
+
+    .tool-name-badge {
+      font-family: 'JetBrains Mono', monospace;
+      color: #ff2d55;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .tool-desc-text {
+      font-size: 12.5px;
+      color: #ffb3c1;
+      margin: 6px 0 10px;
+    }
+
+    .tool-props-pill {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 45, 85, 0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #ffa3b3;
+      margin-right: 6px;
+      margin-bottom: 4px;
     }
 
     .metric-title {
@@ -515,24 +670,28 @@
       </div>
     </header>
 
-    <!-- Metrics Row -->
+    <!-- Metrics Row (Interactive Clickable Cards) -->
     <div class="metrics-grid">
-      <div class="metric-card">
+      <div class="metric-card" onclick="openToolsModal()" title="Click to view all Active MCP Tools">
+        <span class="metric-card-tap-hint">Tap details ↗</span>
         <div class="metric-title">Active MCP Tools</div>
         <div class="metric-value" id="val-tools">5</div>
         <div class="metric-sub">Dynamic LLM Function Calling</div>
       </div>
-      <div class="metric-card">
+      <div class="metric-card" onclick="openTasksModal()" title="Click to view all Tasks & Bookings">
+        <span class="metric-card-tap-hint">Tap details ↗</span>
         <div class="metric-title">Total Tasks & Bookings</div>
         <div class="metric-value" id="val-tasks">-</div>
         <div class="metric-sub" id="sub-pending">Loading...</div>
       </div>
-      <div class="metric-card">
+      <div class="metric-card" onclick="openEventsModal()" title="Click to view Telemetry Stream info">
+        <span class="metric-card-tap-hint">Tap details ↗</span>
         <div class="metric-title">Telemetry Events</div>
         <div class="metric-value" id="val-events">-</div>
         <div class="metric-sub">Real-Time Event Stream</div>
       </div>
-      <div class="metric-card">
+      <div class="metric-card" onclick="openDbModal()" title="Click to view Database Architecture">
+        <span class="metric-card-tap-hint">Tap details ↗</span>
         <div class="metric-title">Database Storage</div>
         <div class="metric-value" style="font-size: 20px; line-height: 1.5;" id="val-db">SQLite + Turso</div>
         <div class="metric-sub">Synchronized Cloud Memory</div>
@@ -621,13 +780,229 @@
     </div>
   </div>
 
+  <!-- Detail Modal Dialog -->
+  <div id="detail-modal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="modal-icon" class="modal-icon-badge">⚡</div>
+          <div>
+            <h2 id="modal-title" style="margin: 0; font-size: 17px; color: #fff;">Card Details</h2>
+            <p id="modal-subtitle" style="margin: 3px 0 0; font-size: 12px; color: var(--text-muted);">Subtitle</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModalDirect()">&times;</button>
+      </div>
+      <div id="modal-body" class="modal-body">
+        <!-- Content injected dynamically -->
+      </div>
+    </div>
+  </div>
+
   <script>
+    // Global telemetry caches
+    window._currentMetrics = {};
+    window._currentTasks = [];
+
+    // Modal Control Functions
+    function openModal(icon, title, subtitle, contentHtml) {
+      document.getElementById('modal-icon').innerText = icon;
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-subtitle').innerText = subtitle;
+      document.getElementById('modal-body').innerHTML = contentHtml;
+      document.getElementById('detail-modal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModalDirect() {
+      const modal = document.getElementById('detail-modal');
+      if (modal) modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    function closeModal(event) {
+      if (event.target.id === 'detail-modal') {
+        closeModalDirect();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModalDirect();
+    });
+
+    // 1. Active MCP Tools Modal
+    function openToolsModal() {
+      const tools = [
+        {
+          name: 'alexa_create_booking',
+          desc: 'Creates a new appointment, reservation, or service booking in SQL database and logs real-time telemetry.',
+          props: ['title (string)', 'customer_name (string)', 'category (doctor/restaurant/cab/flight/general)', 'scheduled_time (string)', 'description (string)'],
+          example: 'Book a doctor appointment for Priya tomorrow at 4 PM'
+        },
+        {
+          name: 'alexa_execute_automation',
+          desc: 'Executes smart home scenes or device workflows (e.g. lights, AC, temperature control, notifications).',
+          props: ['action_type (smart_home_scene/device_control)', 'target_device_or_service (living_room_lights/living_room_ac)', 'parameters (dict)'],
+          example: 'Turn on the living room lights'
+        },
+        {
+          name: 'alexa_query_tasks',
+          desc: 'Queries active bookings, tasks, and schedules with status filters and limit options.',
+          props: ['status (all/pending/confirmed/completed/cancelled)', 'category (optional)', 'limit (default: 10)'],
+          example: 'What are my upcoming tasks?'
+        },
+        {
+          name: 'alexa_update_booking_status',
+          desc: 'Transitions the status of a booking record (e.g. from pending to confirmed or cancelled).',
+          props: ['booking_id (UUID string)', 'status (enum)', 'notes (string)'],
+          example: 'Confirm booking for dinner reservation'
+        },
+        {
+          name: 'alexa_get_system_health',
+          desc: 'Checks MCP gateway status, database connections (SQLite + Turso Cloud), and total telemetry counts.',
+          props: ['(No arguments required)'],
+          example: 'Check system health'
+        }
+      ];
+
+      const html = `
+        <div style="margin-bottom: 16px; color: var(--text-muted); font-size: 13px;">
+          These 5 tools are exposed over the <strong>Model Context Protocol (MCP)</strong>.
+          The autonomous Gemini LLM agent inspects their schemas and dynamically selects and invokes them based on user voice input.
+        </div>
+        ${tools.map(t => `
+          <div class="tool-detail-item">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="tool-name-badge">⚡ ${t.name}</span>
+              <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="closeModalDirect(); quickSend('${t.example}')">Try This Tool ↗</button>
+            </div>
+            <div class="tool-desc-text">${t.desc}</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">Parameters:</div>
+            <div>
+              ${t.props.map(p => `<span class="tool-props-pill">${p}</span>`).join('')}
+            </div>
+          </div>
+        `).join('')}
+      `;
+
+      openModal('⚡', 'Active MCP Tools (5 Registered)', 'Real-Time Dynamic LLM Function Calling Tools', html);
+    }
+
+    // 2. Tasks & Bookings Modal
+    function openTasksModal() {
+      const metrics = window._currentMetrics || {};
+      const tasks = window._currentTasks || [];
+      const total = metrics.total_tasks || 0;
+      const pending = metrics.pending_tasks || 0;
+      const confirmed = metrics.confirmed_tasks || 0;
+
+      const html = `
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div style="background: rgba(255,45,85,0.1); border: 1px solid rgba(255,45,85,0.3); padding: 12px; border-radius: 10px; text-align: center;">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Total Tasks</div>
+            <div style="font-size: 24px; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace;">${total}</div>
+          </div>
+          <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); padding: 12px; border-radius: 10px; text-align: center;">
+            <div style="font-size: 11px; color: #f59e0b; text-transform: uppercase;">Pending</div>
+            <div style="font-size: 24px; font-weight: 800; color: #f59e0b; font-family: 'JetBrains Mono', monospace;">${pending}</div>
+          </div>
+          <div style="background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); padding: 12px; border-radius: 10px; text-align: center;">
+            <div style="font-size: 11px; color: #34d399; text-transform: uppercase;">Confirmed</div>
+            <div style="font-size: 24px; font-weight: 800; color: #34d399; font-family: 'JetBrains Mono', monospace;">${confirmed}</div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h4 style="margin: 0; color: #fff; font-size: 14px;">Recent Bookings in SQL Engine</h4>
+          <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="closeModalDirect(); document.getElementById('tasks-tbody').scrollIntoView({behavior: 'smooth'})">Scroll to Live Table ↓</button>
+        </div>
+
+        <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--card-border); border-radius: 10px;">
+          <table class="tasks-table" style="margin: 0;">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tasks && tasks.length > 0 ? tasks.slice(0, 10).map(t => `
+                <tr>
+                  <td style="font-weight:600;">${escapeHtml(t.title)}</td>
+                  <td><span style="text-transform: capitalize; color:#38bdf8;">${escapeHtml(t.category)}</span></td>
+                  <td><span class="tag-status status-${t.status.toLowerCase()}">${escapeHtml(t.status)}</span></td>
+                  <td style="color:var(--text-muted); font-size:12px;">${new Date(t.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                </tr>
+              `).join('') : '<tr><td colspan="4" style="text-align:center; padding: 15px; color: var(--text-muted);">No records found.</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      openModal('📅', 'Tasks & Voice Bookings Overview', 'Persistent SQL Storage & Workflow Lifecycle', html);
+    }
+
+    // 3. Telemetry Events Modal
+    function openEventsModal() {
+      const metrics = window._currentMetrics || {};
+      const eventsCount = metrics.total_events_logged || 0;
+      const html = `
+        <div style="margin-bottom: 16px; color: var(--text-muted); font-size: 13px;">
+          All MCP tool executions, database operations, and agent state transitions stream in real-time over
+          <strong>Server-Sent Events (SSE)</strong> at <code>/sse</code>.
+        </div>
+        <div style="display: flex; gap: 14px; margin-bottom: 18px;">
+          <div style="flex: 1; background: rgba(255,45,85,0.08); border: 1px solid rgba(255,45,85,0.25); border-radius: 10px; padding: 14px;">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Total Telemetry Logged</div>
+            <div style="font-size: 26px; font-weight: 800; color: #fff; font-family: 'JetBrains Mono', monospace;">${eventsCount}</div>
+          </div>
+          <div style="flex: 1; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.25); border-radius: 10px; padding: 14px;">
+            <div style="font-size: 11px; color: #34d399; text-transform: uppercase;">Protocol Transport</div>
+            <div style="font-size: 18px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace; margin-top: 4px;">SSE Streaming</div>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <button class="btn-secondary" onclick="closeModalDirect(); document.getElementById('log-box').scrollIntoView({behavior: 'smooth'})">View Live Terminal Console ↓</button>
+        </div>
+      `;
+      openModal('⚡', 'Telemetry & Event Stream', 'Real-Time Observability & Audit Log', html);
+    }
+
+    // 4. Database Storage Modal
+    function openDbModal() {
+      const html = `
+        <div style="margin-bottom: 16px; color: var(--text-muted); font-size: 13px;">
+          Alexa+ uses an enterprise-grade <strong>Hybrid Database Architecture</strong> ensuring zero offline latency and cloud redundancy.
+        </div>
+        <div class="tool-detail-item">
+          <div class="tool-name-badge">💾 Local Engine: SQLite (WAL Mode)</div>
+          <div class="tool-desc-text">Zero-latency local persistent storage in <code>alexa_mcp.db</code> for instantaneous read/writes and offline resilience.</div>
+        </div>
+        <div class="tool-detail-item">
+          <div class="tool-name-badge">☁️ Cloud Engine: Turso LibSQL</div>
+          <div class="tool-desc-text">Distributed edge database syncing state globally via <code>libsql://alexaplus-witness.aws-ap-south-1.turso.io</code>.</div>
+        </div>
+        <div style="margin-top: 14px;">
+          <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600;">ACTIVE DATABASE TABLES:</div>
+          <span class="tool-props-pill">task_bookings</span>
+          <span class="tool-props-pill">live_event_logs</span>
+          <span class="tool-props-pill">user_profiles</span>
+          <span class="tool-props-pill">conversation_history</span>
+          <span class="tool-props-pill">user_preferences</span>
+        </div>
+      `;
+      openModal('🗄️', 'Database Storage Architecture', 'Hybrid SQLite + Turso Distributed LibSQL', html);
+    }
+
     // Fetch metrics from backend
     async function fetchMetrics() {
       try {
         const res = await fetch('/api/dashboard/stats');
         if (res.ok) {
           const data = await res.json();
+          window._currentMetrics = data;
           document.getElementById('val-tasks').innerText = data.total_tasks || 0;
           document.getElementById('sub-pending').innerText = `${data.pending_tasks || 0} Pending · ${data.confirmed_tasks || 0} Confirmed`;
           document.getElementById('val-events').innerText = data.total_events_logged || 0;
@@ -646,6 +1021,7 @@
         const res = await fetch('/api/dashboard/tasks');
         if (res.ok) {
           const tasks = await res.json();
+          window._currentTasks = tasks;
           const tbody = document.getElementById('tasks-tbody');
           if (!tasks || tasks.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: var(--text-muted);">No tasks in database yet. Try creating one!</td></tr>';
