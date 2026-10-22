@@ -36,6 +36,7 @@ from ask_sdk_model.ui import SimpleCard
 # Contextual Memory & Database Integrations
 from memory_engine import MemoryEngine, init_memory_tables
 from services.external_tools import AVAILABLE_TOOLS, call_tool
+from services.google_search import google_search_answer, should_search_google
 from config.database import init_db
 
 # Configure structured logging
@@ -210,6 +211,24 @@ class LLMOrchestrator:
     ) -> LLMDecisionSchema:
         """Route user voice utterance through Gemini intelligence and execute MCP tools."""
         memory_summary = memory.build_context_summary()
+        if self.client and should_search_google(utterance, intent_name):
+            try:
+                search_answer = google_search_answer(utterance, self.client)
+                if search_answer:
+                    memory.save_conversation_turn(
+                        session_id,
+                        "assistant",
+                        search_answer,
+                        intent_name,
+                        "google_search",
+                    )
+                    return LLMDecisionSchema(
+                        reasoning="Answered a general-knowledge question with Google Search grounding.",
+                        speech=search_answer,
+                    )
+            except Exception as exc:
+                logger.warning("Google Search grounding failed: %s", exc, exc_info=True)
+
         if not self.client:
             return self._fallback_orchestrator(utterance, intent_name, slots, session_id)
 
@@ -221,9 +240,20 @@ class LLMOrchestrator:
         )
 
         try:
-            logger.info(f"Invoking Gemini 3.8 Flash for session {session_id}...")
-            response = self.client.interactions.create(model="gemini-3.8-flash", input=prompt)
-            raw_text = getattr(response, "output_text", "") or getattr(response, "text", "")
+            logger.info(f"Invoking Gemini for session {session_id}...")
+            raw_text = ""
+            try:
+                response = self.client.models.generate_content(
+                    model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+                    contents=prompt
+                )
+                raw_text = getattr(response, "text", "") or ""
+            except Exception:
+                response = self.client.interactions.create(
+                    model=os.getenv("GEMINI_SEARCH_MODEL", "gemini-3.8-flash"),
+                    input=prompt
+                )
+                raw_text = getattr(response, "output_text", "") or getattr(response, "text", "") or ""
 
             clean_json = raw_text.strip()
             if clean_json.startswith("```json"):

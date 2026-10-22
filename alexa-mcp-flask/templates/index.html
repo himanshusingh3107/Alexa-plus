@@ -797,8 +797,15 @@
         });
         const data = await res.json();
 
+        if (data.thought) {
+          appendChat('tool', `🧠 <em>Agent Thought:</em> ${escapeHtml(data.thought)}`);
+        }
+
         if (data.tool_used) {
-          appendChat('tool', `⚡ MCP Tool Executed: <strong>${data.tool_used}</strong>`);
+          const toolLabel = data.tool_used === 'google_search'
+            ? '🔎 Grounded Knowledge: <strong>Google Search</strong>'
+            : `⚡ MCP Tool Executed: <strong>${data.tool_used}</strong>`;
+          appendChat('tool', toolLabel);
         }
 
         const reply = data.response || 'Action processed.';
@@ -823,7 +830,11 @@
       evtSource.onopen = () => {
         indicator.innerText = '● SSE Connected';
         indicator.style.color = '#34d399';
-        appendLog(new Date().toLocaleTimeString(), 'SSE_CONNECTED', 'Real-time telemetry link active.');
+        // Log once only when first connected
+        if (!window._sseEverConnected) {
+          appendLog(new Date().toLocaleTimeString(), 'SSE_CONNECTED', 'Real-time telemetry link active.');
+          window._sseEverConnected = true;
+        }
       };
 
       evtSource.addEventListener('tool_execution', (e) => {
@@ -833,13 +844,31 @@
       });
 
       evtSource.addEventListener('database_update', (e) => {
-        appendLog(new Date().toLocaleTimeString(), 'DATABASE_UPDATE', e.data);
+        try {
+          const parsed = JSON.parse(e.data);
+          // Only show meaningful database events
+          if (parsed && (parsed.event_type || parsed.details)) {
+            appendLog(new Date().toLocaleTimeString(), parsed.event_type || 'DB_UPDATE', JSON.stringify(parsed.details || {}));
+          }
+        } catch(err) {
+          // If raw text
+          if (e.data && !e.data.includes('None')) {
+            appendLog(new Date().toLocaleTimeString(), 'DB_UPDATE', e.data);
+          }
+        }
         fetchMetrics();
         loadTasks();
       });
 
+      evtSource.addEventListener('ping', () => {
+        // Heartbeat received silently, keep indicator green
+        indicator.innerText = '● SSE Connected';
+        indicator.style.color = '#34d399';
+      });
+
       evtSource.onerror = () => {
-        indicator.innerText = '○ Reconnecting...';
+        // Browser auto-reconnects in background
+        indicator.innerText = '○ Syncing...';
         indicator.style.color = '#f59e0b';
       };
     }
