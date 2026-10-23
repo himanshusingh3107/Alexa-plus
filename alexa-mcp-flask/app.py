@@ -133,6 +133,18 @@ def create_app() -> Flask:
 
         try:
             result = agent_orchestrator.process_utterance(utterance, session_id="web-dashboard-session")
+            if result.get("tool_used"):
+                try:
+                    from routes.sse_routes import broadcast_sse
+                    broadcast_sse("tool_execution", {
+                        "tool": result.get("tool_used"),
+                        "thought": result.get("thought", ""),
+                        "utterance": utterance,
+                        "response": result.get("response", ""),
+                    })
+                except Exception:
+                    pass
+
             return jsonify({
                 "success": result.get("success", True),
                 "tool_used": result.get("tool_used"),

@@ -123,7 +123,7 @@ def sse_event_stream(session_id: str, session_queue: queue.Queue):
             # B. Stream live database updates (SELECT queries)
             if current_time - last_db_poll_time >= DB_POLL_INTERVAL:
                 try:
-                    new_events = query_latest_events(after_id=last_db_event_id, session_id=session_id)
+                    new_events = query_latest_events(after_id=last_db_event_id)
                     if new_events:
                         for evt in new_events:
                             yield format_sse_message("database_update", evt)

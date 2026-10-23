@@ -1335,6 +1335,10 @@
             ? '🔎 Grounded Knowledge: <strong>Google Search</strong>'
             : `⚡ MCP Tool Executed: <strong>${data.tool_used}</strong>`;
           appendChat('tool', toolLabel);
+
+          // Instant real-time telemetry registration in the log console
+          const timeNow = new Date().toLocaleTimeString();
+          appendLog(timeNow, data.tool_used.toUpperCase(), data.thought || 'Execution dispatched.');
         }
 
         const reply = data.response || 'Action processed.';
@@ -1375,14 +1379,21 @@
       };
 
       evtSource.addEventListener('tool_execution', (e) => {
-        appendLog(new Date().toLocaleTimeString(), 'TOOL_INVOKED', e.data);
+        try {
+          const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+          const toolName = data.tool || data.tool_name || 'MCP_TOOL';
+          const thought = data.thought || data.message || (data.arguments ? JSON.stringify(data.arguments) : '');
+          appendLog(new Date().toLocaleTimeString(), toolName.toUpperCase(), thought);
+        } catch(err) {
+          appendLog(new Date().toLocaleTimeString(), 'TOOL_INVOKED', String(e.data));
+        }
         fetchMetrics();
         loadTasks();
       });
 
       evtSource.addEventListener('database_update', (e) => {
         try {
-          const parsed = JSON.parse(e.data);
+          const parsed = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
           if (parsed && parsed.id) {
             if (seenEventIds.has(parsed.id)) return; // Deduplicate
             seenEventIds.add(parsed.id);
@@ -1390,11 +1401,12 @@
           }
           if (parsed && (parsed.event_type || parsed.details)) {
             const timeStr = parsed.created_at ? new Date(parsed.created_at).toLocaleTimeString() : new Date().toLocaleTimeString();
-            appendLog(timeStr, parsed.event_type || 'DB_UPDATE', JSON.stringify(parsed.details || {}));
+            const detailStr = typeof parsed.details === 'object' ? JSON.stringify(parsed.details) : String(parsed.details || '');
+            appendLog(timeStr, parsed.event_type || 'DB_UPDATE', detailStr);
           }
         } catch(err) {
           if (e.data && !e.data.includes('None')) {
-            appendLog(new Date().toLocaleTimeString(), 'DB_UPDATE', e.data);
+            appendLog(new Date().toLocaleTimeString(), 'DB_UPDATE', String(e.data));
           }
         }
         fetchMetrics();

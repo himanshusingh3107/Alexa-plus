@@ -247,7 +247,15 @@ def create_task_booking(
             },
         )
         db.add(event)
+        db.flush()
+        event_dict = event.to_dict()
         result = booking.to_dict()
+
+    try:
+        from routes.sse_routes import broadcast_sse
+        broadcast_sse("database_update", event_dict)
+    except Exception:
+        pass
 
     if TURSO_CLIENT:
         try:
@@ -363,6 +371,13 @@ def record_live_event(
             logger.warning(f"Turso event sync error: {t_err}")
 
     logger.debug(f"Recorded live event {event_type} (ID: {result['id']})")
+
+    try:
+        from routes.sse_routes import broadcast_sse
+        broadcast_sse("database_update", result)
+    except Exception:
+        pass
+
     return result
 
 

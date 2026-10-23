@@ -361,6 +361,19 @@ def call_tool(tool_name: str, arguments: Dict[str, Any], session_id: Optional[st
     else:
         raise ValueError(f"Unknown tool: '{tool_name}'")
 
+    # Broadcast tool execution event live over SSE
+    try:
+        from routes.sse_routes import broadcast_sse
+        broadcast_sse("tool_execution", {
+            "tool_name": tool_name,
+            "arguments": arguments,
+            "session_id": session_id,
+            "status": "completed" if result.get("success", True) else "error",
+            "message": result.get("message", f"Tool {tool_name} executed successfully."),
+        })
+    except Exception:
+        pass
+
     # Present formatted Python dictionary text
     return {
         "content": [
