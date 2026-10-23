@@ -285,20 +285,93 @@
       margin-top: 10px;
       line-height: 1.4;
     }
+
+    .slide-selector-bar {
+      display: flex;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+
+    .slide-pill {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .slide-pill .pill-num {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .slide-pill:hover {
+      color: #fff;
+      background: rgba(255, 45, 85, 0.15);
+      border-color: rgba(255, 45, 85, 0.3);
+    }
+
+    .slide-pill.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(255, 45, 85, 0.35), rgba(185, 28, 28, 0.35));
+      border-color: var(--primary);
+      box-shadow: 0 0 12px rgba(255, 45, 85, 0.35);
+    }
+
+    .slide-pill.active .pill-num {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .autoplay-active {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 14px rgba(255, 45, 85, 0.6) !important;
+      background: rgba(255, 45, 85, 0.25) !important;
+      color: #fff !important;
+    }
   </style>
 </head>
 <body>
   <div class="glow"></div>
 
-  <!-- Top bar -->
+  <!-- Top bar with brand, live slide pills, timer, and autoplay -->
   <div class="top-bar">
     <div class="brand">
       <span>Alexa+</span>
       <span class="brand-badge">Official 3-Minute Video Pitch</span>
+      <span id="slide-indicator" style="font-size: 12px; color: #ff8099; background: rgba(255,45,85,0.15); padding: 4px 10px; border-radius: 6px; font-weight: 700; border: 1px solid var(--card-border);">Slide 1 / 6</span>
     </div>
-    <div style="display: flex; gap: 14px; align-items: center;">
+
+    <!-- Direct Slide Pills Selector (Instant Jump to Any Slide) -->
+    <div class="slide-selector-bar" id="slide-pills">
+      <button class="slide-pill active" onclick="goToSlide(0)" title="Part 1: The Pitch & Hook (0:00 - 0:25)"><span class="pill-num">1</span> Hook & Vision</button>
+      <button class="slide-pill" onclick="goToSlide(1)" title="Part 2: The Core Problem & Our Shift (0:25 - 0:55)"><span class="pill-num">2</span> The Shift</button>
+      <button class="slide-pill" onclick="goToSlide(2)" title="Part 3: Multi-Protocol Architecture (0:55 - 1:30)"><span class="pill-num">3</span> Architecture</button>
+      <button class="slide-pill" onclick="goToSlide(3)" title="Part 4: Live Web Demonstration (1:30 - 2:20)"><span class="pill-num">4</span> Live Demo</button>
+      <button class="slide-pill" onclick="goToSlide(4)" title="Part 5: AWS SAM & Production Readiness (2:20 - 2:45)"><span class="pill-num">5</span> Cloud & SAM</button>
+      <button class="slide-pill" onclick="goToSlide(5)" title="Part 6: Conclusion & Impact (2:45 - 3:00)"><span class="pill-num">6</span> Roadmap</button>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center;">
       <span class="timer-badge" id="video-timer">⏱️ 00:00 / 03:00</span>
-      <a href="/" target="_blank" class="btn btn-outline" style="text-decoration:none; padding:8px 16px; font-size:12px;">Open Live Web App ↗</a>
+      <button class="btn btn-outline" id="autoplay-btn" onclick="toggleAutoPlay()" style="padding: 7px 14px; font-size: 12px;" title="Automatically advance through all 6 slides with exact 3-min hackathon timings">
+        ▶ Auto-Play All Slides
+      </button>
+      <a href="/" target="_blank" class="btn btn-outline" style="text-decoration:none; padding:7px 14px; font-size:12px;">Live Dashboard ↗</a>
     </div>
   </div>
 
@@ -491,52 +564,177 @@
 
   </div>
 
-  <!-- Bottom Controls -->
+  <!-- Bottom Controls Bar -->
   <div class="controls-bar">
-    <button class="btn btn-outline" onclick="prevSlide()">◀ Previous</button>
-
-    <div class="slide-dots" id="dots-container">
-      <div class="dot active" onclick="goToSlide(0)"></div>
-      <div class="dot" onclick="goToSlide(1)"></div>
-      <div class="dot" onclick="goToSlide(2)"></div>
-      <div class="dot" onclick="goToSlide(3)"></div>
-      <div class="dot" onclick="goToSlide(4)"></div>
-      <div class="dot" onclick="goToSlide(5)"></div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button class="btn btn-outline" onclick="prevSlide()" title="Previous slide (Left Arrow or PageUp)">◀ Previous</button>
+      <button class="btn btn-outline" onclick="goToSlide(0)" title="Go to first slide (Home)">⏮ First</button>
     </div>
 
-    <div style="display: flex; gap: 12px;">
+    <!-- Center: Slide Dots and Live Auto-Play Countdown Indicator -->
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+      <div class="slide-dots" id="dots-container">
+        <div class="dot active" onclick="goToSlide(0)" title="Slide 1: Hook & Vision"></div>
+        <div class="dot" onclick="goToSlide(1)" title="Slide 2: Problem & Shift"></div>
+        <div class="dot" onclick="goToSlide(2)" title="Slide 3: Architecture"></div>
+        <div class="dot" onclick="goToSlide(3)" title="Slide 4: Live Demo"></div>
+        <div class="dot" onclick="goToSlide(4)" title="Slide 5: Cloud & SAM"></div>
+        <div class="dot" onclick="goToSlide(5)" title="Slide 6: Conclusion"></div>
+      </div>
+      <span id="countdown-status" style="font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">Keyboard: [1-6] Jump · [Space/Arrows] Next/Prev · [A] Auto-Play · [F] Fullscreen</span>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center;">
       <button class="btn btn-outline" id="timer-toggle-btn" onclick="toggleTimer()">▶ Start Timer</button>
-      <button class="btn" onclick="nextSlide()">Next Slide ▶</button>
+      <button class="btn btn-outline" onclick="resetTimer()" title="Reset presentation timer to 00:00">↺ Reset</button>
+      <button class="btn btn-outline" onclick="toggleFullscreen()" title="Toggle Fullscreen (F)">⛶ Fullscreen</button>
+      <button class="btn" onclick="nextSlide()" title="Next slide (Right Arrow or Space)">Next Slide ▶</button>
     </div>
   </div>
 
   <script>
     let currentSlide = 0;
+    const TARGET_DURATIONS = [25, 30, 35, 50, 25, 15]; // Exact seconds per slide (Total = 180s = 3 mins)
     const slides = document.querySelectorAll('.slide');
     const dots = document.querySelectorAll('.dot');
+    const pills = document.querySelectorAll('.slide-pill');
+    const slideIndicator = document.getElementById('slide-indicator');
+    const countdownStatus = document.getElementById('countdown-status');
+
     let timerInterval = null;
     let secondsElapsed = 0;
+    let autoPlayInterval = null;
+    let autoPlayRemaining = 0;
 
-    function showSlide(index) {
+    function showSlide(index, notifyBackend = true) {
       if (index < 0) index = 0;
       if (index >= slides.length) index = slides.length - 1;
       currentSlide = index;
 
       slides.forEach((s, i) => s.classList.toggle('active', i === currentSlide));
       dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+      pills.forEach((p, i) => p.classList.toggle('active', i === currentSlide));
+
+      if (slideIndicator) {
+        slideIndicator.innerText = `Slide ${currentSlide + 1} / ${slides.length}`;
+      }
+
+      if (autoPlayInterval) {
+        autoPlayRemaining = TARGET_DURATIONS[currentSlide];
+        updateAutoPlayUI();
+      }
+
+      // Notify backend and demo recorder if requested
+      if (notifyBackend) {
+        fetch('/api/presentation/slide', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slide: currentSlide })
+        }).catch(() => {});
+      }
     }
 
     function nextSlide() { showSlide(currentSlide + 1); }
     function prevSlide() { showSlide(currentSlide - 1); }
     function goToSlide(i) { showSlide(i); }
 
-    // Keyboard navigation
+    // Toggle Auto-Play mode
+    function toggleAutoPlay() {
+      if (autoPlayInterval) {
+        stopAutoPlay();
+      } else {
+        startAutoPlay();
+      }
+    }
+
+    function startAutoPlay() {
+      const btn = document.getElementById('autoplay-btn');
+      btn.classList.add('autoplay-active');
+      btn.innerText = '⏸ Pause Auto-Play';
+
+      if (!timerInterval) {
+        toggleTimer();
+      }
+
+      autoPlayRemaining = TARGET_DURATIONS[currentSlide];
+      updateAutoPlayUI();
+
+      autoPlayInterval = setInterval(() => {
+        autoPlayRemaining--;
+        updateAutoPlayUI();
+
+        if (autoPlayRemaining <= 0) {
+          if (currentSlide < slides.length - 1) {
+            showSlide(currentSlide + 1);
+          } else {
+            stopAutoPlay();
+            if (countdownStatus) {
+              countdownStatus.innerText = '🎉 3-Minute Hackathon Pitch Completed!';
+              countdownStatus.style.color = '#10b981';
+            }
+          }
+        }
+      }, 1000);
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayInterval) {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = null;
+      }
+      const btn = document.getElementById('autoplay-btn');
+      btn.classList.remove('autoplay-active');
+      btn.innerText = '▶ Auto-Play All Slides';
+      if (countdownStatus) {
+        countdownStatus.innerText = 'Keyboard: [1-6] Jump · [Space/Arrows] Next/Prev · [A] Auto-Play · [F] Fullscreen';
+        countdownStatus.style.color = 'var(--text-muted)';
+      }
+    }
+
+    function updateAutoPlayUI() {
+      const btn = document.getElementById('autoplay-btn');
+      if (autoPlayInterval) {
+        btn.innerText = `⏸ Auto-Play (Slide ${currentSlide + 1}: ${autoPlayRemaining}s)`;
+        if (countdownStatus) {
+          countdownStatus.innerText = `⏳ Slide ${currentSlide + 1} auto-advancing in ${autoPlayRemaining}s (Target: ${TARGET_DURATIONS[currentSlide]}s)`;
+          countdownStatus.style.color = '#ff8099';
+        }
+      }
+    }
+
+    // Fullscreen toggle
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // Keyboard navigation (Supports 1-6 numbers, arrows, space, full controls)
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
-      if (e.key === 'ArrowLeft') prevSlide();
-      if (e.key === 'f' || e.key === 'F') {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else document.exitFullscreen();
+      // Don't trigger if user is inside an input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.key >= '1' && e.key <= '6') {
+        const targetIdx = parseInt(e.key, 10) - 1;
+        showSlide(targetIdx);
+      } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goToSlide(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goToSlide(slides.length - 1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullscreen();
+      } else if (e.key === 'a' || e.key === 'A') {
+        toggleAutoPlay();
       }
     });
 
@@ -554,14 +752,71 @@
           const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
           const secs = String(secondsElapsed % 60).padStart(2, '0');
           const timerEl = document.getElementById('video-timer');
-          timerEl.innerText = `⏱️ ${mins}:${secs} / 03:00`;
-          if (secondsElapsed >= 180) {
-            timerEl.style.color = '#ef4444';
-            timerEl.style.borderColor = '#ef4444';
+          if (timerEl) {
+            timerEl.innerText = `⏱️ ${mins}:${secs} / 03:00`;
+            if (secondsElapsed >= 180) {
+              timerEl.style.color = '#ef4444';
+              timerEl.style.borderColor = '#ef4444';
+            }
           }
         }, 1000);
       }
     }
+
+    function resetTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      secondsElapsed = 0;
+      const timerEl = document.getElementById('video-timer');
+      if (timerEl) {
+        timerEl.innerText = '⏱️ 00:00 / 03:00';
+        timerEl.style.color = '#ff8099';
+        timerEl.style.borderColor = 'var(--card-border)';
+      }
+      const btn = document.getElementById('timer-toggle-btn');
+      if (btn) btn.innerText = '▶ Start Timer';
+    }
+
+    // Connect to Server-Sent Events (SSE) for remote slide switching from demo_recorder.py
+    function initSlideSSE() {
+      try {
+        const sse = new EventSource('/sse');
+        sse.addEventListener('slide_change', (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            const targetSlide = typeof data.slide === 'number' ? data.slide : parseInt(data.slide, 10);
+            if (!isNaN(targetSlide) && targetSlide !== currentSlide) {
+              showSlide(targetSlide, false);
+            }
+          } catch (err) {
+            const num = parseInt(event.data, 10);
+            if (!isNaN(num) && num !== currentSlide) {
+              showSlide(num, false);
+            }
+          }
+        });
+
+        sse.onerror = () => {
+          // Reconnect silently after a few seconds
+          setTimeout(initSlideSSE, 4000);
+        };
+      } catch (err) {
+        console.warn('SSE connection unavailable for presentation slide sync:', err);
+      }
+    }
+    initSlideSSE();
+
+    // Sync initial slide state on page load
+    fetch('/api/presentation/slide')
+      .then(res => res.json())
+      .then(data => {
+        if (typeof data.slide === 'number' && data.slide !== currentSlide) {
+          showSlide(data.slide, false);
+        }
+      })
+      .catch(() => {});
   </script>
 </body>
 </html>

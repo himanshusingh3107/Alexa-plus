@@ -101,6 +101,26 @@ def create_app() -> Flask:
         """Presentation slide deck and teleprompter for hackathon video recording."""
         return render_template("presentation.html")
 
+    @app.route("/api/presentation/slide", methods=["GET", "POST"])
+    def presentation_slide():
+        """Get or set the active presentation slide, broadcasting via SSE to all open presentation clients."""
+        if request.method == "POST":
+            data = request.get_json(silent=True) or {}
+            try:
+                slide_idx = int(data.get("slide", 0))
+            except (ValueError, TypeError):
+                slide_idx = 0
+            slide_idx = max(0, min(5, slide_idx))
+            app.config["CURRENT_SLIDE"] = slide_idx
+            try:
+                from routes.sse_routes import broadcast_sse
+                broadcast_sse("slide_change", {"slide": slide_idx})
+            except Exception as exc:
+                logger.error(f"Failed to broadcast slide change: {exc}")
+            return jsonify({"success": True, "slide": slide_idx}), 200
+        else:
+            return jsonify({"slide": app.config.get("CURRENT_SLIDE", 0)}), 200
+
     @app.route("/api/dashboard/stats", methods=["GET"])
     def dashboard_stats():
         """Returns live system counts and operational metrics for the web UI."""
