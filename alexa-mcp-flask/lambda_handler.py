@@ -182,7 +182,7 @@ class LLMOrchestrator:
             tools_summary.append(f"- Tool: `{name}` | Desc: {desc} | Required: {reqs} | Properties: {list(props.keys())}")
 
         return (
-            "You are Alexa+, the advanced AI assistant running inside an Amazon Alexa Skill with MCP tools and persistent memory.\n"
+            "You are Alexa+, the advanced AI assistant built by Team Invictus (Team members: Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh), running inside an Amazon Alexa Skill with MCP tools and persistent memory.\n"
             f"### RECENT USER PROFILE & HISTORICAL CONTEXT:\n{memory_context or 'No prior preferences recorded.'}\n\n"
             f"### AVAILABLE MCP TOOLS:\n" + "\n".join(tools_summary) + "\n\n"
             "### EXECUTION GUIDELINES:\n"

@@ -110,8 +110,9 @@ class AgenticOrchestrator:
         # -------------------------------------------------------------
         if self.fast_client:
             prompt = (
-                "You are Alexa+, a voice assistant. Provide a clear, accurate, and concise answer "
-                "in 1 to 2 sentences suitable to be spoken aloud. No bullet points, asterisks, or markdown symbols.\n\n"
+                "You are Alexa+, an autonomous voice assistant built by Team Invictus (team members: Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh). "
+                "If asked who made or created you, state that you were built by Team Invictus and mention the members. "
+                "Provide a clear, accurate, and concise answer in 1 to 2 sentences suitable to be spoken aloud. No bullet points, asterisks, or markdown symbols.\n\n"
                 f"Question: {utterance}"
             )
             ans = self.fast_client.ask(prompt, max_tokens=75)
@@ -589,10 +590,36 @@ class AgenticOrchestrator:
                 "thought": "Conversational greeting acknowledged.",
             }
 
+        # ------------------------------------------------------------------
+        # 21. Creator & Team Invictus Attribution
+        # ------------------------------------------------------------------
+        is_creator_query = any(w in lowered for w in [
+            "who made you", "who created you", "who built you", "who developed you",
+            "who is your creator", "who are your creators", "who made alexa",
+            "who created alexa", "who built alexa", "tumhe kisne banaya",
+            "tumhe kaun banaya", "tumhe kon banaya", "tumhe kisne banaya hai",
+            "tumhe kon banaya hai", "tumhe kisne design kiya", "tumhe kisne banaya tha",
+            "kisne banaya tumhe", "kaun banaya tumhe", "kon banaya tumhe",
+            "tumhara creator kaun hai", "tumhare creator kaun hai", "kisne banaya",
+            "kon banaya", "kaun banaya", "developer kaun hai", "team invictus", "invictus"
+        ]) or (any(b in lowered for b in ["banaya", "create kiya", "build kiya"]) and any(k in lowered for k in ["kisne", "kaun", "kon", "tumhe", "kisko"]))
+        if is_creator_query:
+            is_hindi = any(h in lowered for h in ["banaya", "kisne", "kaun", "kon", "tumhe", "hai", "kisko", "aapko"])
+            if is_hindi:
+                speech = "Mujhe Team Invictus ne banaya hai, and the team members are Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh."
+            else:
+                speech = "I was built by Team Invictus! The team members are Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh."
+            return {
+                "success": True,
+                "response": speech,
+                "tool_used": None,
+                "thought": "Creator identity answered: Team Invictus (Kanak Singh, Ishika Shringi, Abhinav Tiwari, Himanshu Singh).",
+            }
+
         if lowered in ["who are you", "tum kaun ho", "intro", "what is your name"]:
             return {
                 "success": True,
-                "response": "I am Alexa+, an autonomous agentic AI assistant powered by Google Gemini and MCP tools.",
+                "response": "I am Alexa+, an autonomous agentic AI assistant built by Team Invictus (Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh), powered by Google Gemini and MCP tools.",
                 "tool_used": None,
                 "thought": "Agent identity provided.",
             }
