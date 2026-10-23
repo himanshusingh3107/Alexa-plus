@@ -110,8 +110,9 @@ class AgenticOrchestrator:
         # -------------------------------------------------------------
         if self.fast_client:
             prompt = (
-                "You are Alexa+, an autonomous voice assistant built by Team Invictus (team members: Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh). "
-                "If asked who made or created you, state that you were built by Team Invictus and mention the members. "
+                "You are Alexa+, an Agentic Alexa built by Team Invictus (team members: Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh). "
+                "Always refer to yourself as 'Agentic Alexa' or 'ek Agentic Alexa' (never use the words 'autonomous voice assistant'). "
+                "If asked who you are or who made you, explain that you are an Agentic Alexa built by Team Invictus. "
                 "Provide a clear, accurate, and concise answer in 1 to 2 sentences suitable to be spoken aloud. No bullet points, asterisks, or markdown symbols.\n\n"
                 f"Question: {utterance}"
             )
@@ -616,12 +617,25 @@ class AgenticOrchestrator:
                 "thought": "Creator identity answered: Team Invictus (Kanak Singh, Ishika Shringi, Abhinav Tiwari, Himanshu Singh).",
             }
 
-        if lowered in ["who are you", "tum kaun ho", "intro", "what is your name"]:
+        # ------------------------------------------------------------------
+        # 22. Identity & Name Queries: "tum kaun ho", "who are you", etc.
+        # ------------------------------------------------------------------
+        is_identity_query = any(w in lowered for w in [
+            "who are you", "tum kaun ho", "intro", "what is your name", "tumhara naam",
+            "tumhaara naam", "tumhara kya naam", "tumhaara kya naam", "naam kya hai",
+            "aap kaun ho", "aapka naam", "what's your name", "tell me about yourself", "who r u"
+        ]) or (("kaun ho" in lowered or "kon ho" in lowered) and ("tum" in lowered or "aap" in lowered)) or ("tumhaara kya naam" in lowered or "tumhara kya naam" in lowered)
+        if is_identity_query:
+            is_hindi = any(h in lowered for h in ["tum", "kaun", "kon", "aap", "naam", "kya", "ho", "hai"])
+            if is_hindi:
+                speech = "Main Alexa+ hoon, ek Agentic Alexa jise Team Invictus ke members Kanak Singh, Ishika Shringi, Abhinav Tiwari, aur Himanshu Singh ne banaya hai."
+            else:
+                speech = "I am Alexa+, an Agentic Alexa built by Team Invictus (Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh), powered by Google Gemini and MCP tools."
             return {
                 "success": True,
-                "response": "I am Alexa+, an autonomous agentic AI assistant built by Team Invictus (Kanak Singh, Ishika Shringi, Abhinav Tiwari, and Himanshu Singh), powered by Google Gemini and MCP tools.",
+                "response": speech,
                 "tool_used": None,
-                "thought": "Agent identity provided.",
+                "thought": "Agent identity provided: Agentic Alexa created by Team Invictus.",
             }
 
         if any(w in lowered for w in ["joke", "chutkula"]):
