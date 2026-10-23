@@ -31,6 +31,8 @@
 ### 🔄 Dynamic Tool Routing via MCP
 Instead of hardcoding business logic per intent, Alexa+ exposes backend capabilities as **MCP tools**. The LLM reasons over user input and dynamically selects the right tool — booking appointments, controlling smart home devices, querying databases — all through natural conversation.
 
+General-knowledge questions that do not match Alexa+ commands can use Gemini's Google Search grounding for current answers. Booking and other recognized Alexa+ commands continue through their existing routes. Configure the existing `GEMINI_API_KEY` in `.env`; `GEMINI_SEARCH_MODEL` is optional and defaults to `gemini-3.8-flash`.
+
 ### 🧠 Contextual Memory Engine
 A persistent SQLite-backed memory layer stores:
 - **User profiles** and display names
