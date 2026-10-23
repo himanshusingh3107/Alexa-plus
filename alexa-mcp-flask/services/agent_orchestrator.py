@@ -250,7 +250,8 @@ class AgenticOrchestrator:
         # ------------------------------------------------------------------
         # 3. AIR CONDITIONER / CLIMATE (AC, Thermostat, Cool Mode)
         # ------------------------------------------------------------------
-        if any(w in lowered for w in ["ac", "air conditioner", "thermostat", "garmi", "thand", "hvac"]) and "cooler" not in lowered:
+        has_ac_keyword = bool(re.search(r'\b(ac|air conditioner|thermostat|hvac|a/c)\b', lowered)) or any(w in lowered for w in ["garmi", "thand"])
+        if has_ac_keyword and "cooler" not in lowered:
             room = "bedroom_ac" if "bedroom" in lowered else "living_room_ac"
             if any(w in lowered for w in ["off", "band", "thand", "stop"]):
                 action = "turn_off"
