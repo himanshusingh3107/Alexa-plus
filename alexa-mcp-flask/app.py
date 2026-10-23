@@ -213,6 +213,13 @@ if __name__ == "__main__":
     logger.info(f"Starting Alexa+ MCP Server on {host}:{port} (Debug: {debug_mode})")
 
     # For production on Windows or Linux, waitress or threaded Flask development server
+    print("\n" + "=" * 65)
+    print("🚀 ALEXA+ PRODUCTION MCP SERVER IS LIVE!")
+    print(f"👉 Web Console Dashboard: http://localhost:{port}")
+    print(f"👉 Local IP:              http://127.0.0.1:{port}")
+    print(f"👉 Video Pitch Deck:     http://localhost:{port}/presentation")
+    print("=" * 65 + "\n", flush=True)
+
     try:
         from waitress import serve
         logger.info("Serving via production WSGI server (Waitress)...")
